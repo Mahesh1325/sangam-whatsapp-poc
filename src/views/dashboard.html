@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sangam Support — Operations Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Dark Theme (Default) */
+    :root, [data-theme="dark"] {
+      --bg: #090a0f;
+      --topbar-bg: rgba(9, 10, 15, 0.85);
+      --surface: #12141c;
+      --surface-elevated: #181b26;
+      --surface-hover: #1e2230;
+      --border: #232736;
+      --border-subtle: #1a1e2b;
+      --border-focus: #3b82f6;
+
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --text-dim: #475569;
+
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-subtle: rgba(37, 99, 235, 0.12);
+
+      --success: #10b981;
+      --success-subtle: rgba(16, 185, 129, 0.12);
+      --success-border: rgba(16, 185, 129, 0.25);
+
+      --warning: #f59e0b;
+      --warning-subtle: rgba(245, 158, 11, 0.12);
+      --warning-border: rgba(245, 158, 11, 0.25);
+
+      --purple: #8b5cf6;
+      --purple-subtle: rgba(139, 92, 246, 0.12);
+
+      --thead-bg: #0f121a;
+      --brand-mark-bg: #1e293b;
+      --brand-mark-border: #334155;
+      --brand-mark-color: #38bdf8;
+      --active-pill-bg: #1e293b;
+      --input-bg: #090a0f;
+      --input-bg-focus: #0f121a;
+      --code-bg: rgba(56, 189, 248, 0.08);
+      --code-color: #38bdf8;
+      --resolved-bg: rgba(16, 185, 129, 0.05);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    /* Light Theme */
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --topbar-bg: rgba(248, 250, 252, 0.88);
+      --surface: #ffffff;
+      --surface-elevated: #f1f5f9;
+      --surface-hover: #f8fafc;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --border-focus: #2563eb;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-subtle: rgba(37, 99, 235, 0.08);
+
+      --success: #059669;
+      --success-subtle: rgba(16, 185, 129, 0.1);
+      --success-border: rgba(16, 185, 129, 0.25);
+
+      --warning: #d97706;
+      --warning-subtle: rgba(245, 158, 11, 0.1);
+      --warning-border: rgba(245, 158, 11, 0.25);
+
+      --purple: #7c3aed;
+      --purple-subtle: rgba(124, 58, 237, 0.08);
+
+      --thead-bg: #f8fafc;
+      --brand-mark-bg: #e0f2fe;
+      --brand-mark-border: #bae6fd;
+      --brand-mark-color: #0284c7;
+      --active-pill-bg: #e2e8f0;
+      --input-bg: #ffffff;
+      --input-bg-focus: #ffffff;
+      --code-bg: rgba(2, 132, 199, 0.08);
+      --code-color: #0284c7;
+      --resolved-bg: rgba(16, 185, 129, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    /* Top Navigation */
+    nav.topbar {
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--topbar-bg);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .topbar-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      background: var(--brand-mark-bg);
+      border: 1px solid var(--brand-mark-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand-mark-color);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+      transition: all 0.2s ease;
+    }
+
+    .brand-info {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--surface-hover);
+      color: var(--text-muted);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .live-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--success);
+      padding: 5px 11px;
+      border-radius: 20px;
+      background: var(--success-subtle);
+      border: 1px solid var(--success-border);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .btn-icon {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .btn-icon:hover {
+      background: var(--surface-hover);
+      color: var(--text-primary);
+      border-color: var(--border-focus);
+    }
+
+    /* Main Container */
+    main.container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 24px 64px;
+    }
+
+    /* KPI Summary Row */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 900px) {
+      .metrics-bar { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px) {
+      .metrics-bar { grid-template-columns: 1fr; }
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .metric-card:hover {
+      border-color: var(--border-focus);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .metric-indicator.open { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+    .metric-indicator.closed { background: var(--success); }
+    .metric-indicator.total { background: #38bdf8; }
+    .metric-indicator.updates { background: var(--purple); }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-foot {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Tab & Navigation Toolbar */
+    .view-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .tabs {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 3px;
+      border-radius: var(--radius-sm);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover { color: var(--text-primary); }
+
+    .tab-btn.active {
+      background: var(--active-pill-bg);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .tab-count {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: var(--surface-hover);
+      color: var(--text-muted);
+    }
+
+    .tab-btn.active .tab-count {
+      background: var(--border);
+      color: var(--text-primary);
+    }
+
+    .search-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-pills {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+    }
+
+    .pill-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pill-btn:hover { color: var(--text-primary); }
+    .pill-btn.active {
+      background: var(--active-pill-bg);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      width: 260px;
+    }
+
+    .search-input-wrap svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 13px;
+      padding: 7px 12px 7px 34px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-input:focus {
+      border-color: var(--border-focus);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* Content Card */
+    .content-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Table Styles */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    table.data-table thead {
+      background: var(--thead-bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    table.data-table th {
+      padding: 12px 18px;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    table.data-table tbody tr {
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.15s ease;
+    }
+
+    table.data-table tbody tr:hover {
+      background: var(--surface-hover);
+    }
+
+    table.data-table td {
+      padding: 14px 18px;
+      vertical-align: middle;
+    }
+
+    /* Column Typography */
+    .ticket-code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--code-color);
+      background: var(--code-bg);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .phone-cell {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .phone-number {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .wa-link {
+      color: var(--success);
+      display: inline-flex;
+      opacity: 0.75;
+      transition: opacity 0.15s;
+    }
+
+    .wa-link:hover { opacity: 1; }
+
+    /* Category Pill */
+    .cat-tag {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--surface-hover);
+      padding: 3px 9px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* Issue description */
+    .issue-text {
+      max-width: 320px;
+      color: var(--text-primary);
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .time-stamp {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Status Pill */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .status-badge.open {
+      background: var(--warning-subtle);
+      color: var(--warning);
+      border: 1px solid var(--warning-border);
+    }
+
+    .status-badge.closed {
+      background: var(--success-subtle);
+      color: var(--success);
+      border: 1px solid var(--success-border);
+    }
+
+    .badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Actions Column */
+    .action-container {
+      min-width: 310px;
+    }
+
+    .inline-resolve-form {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .remarks-input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 12.5px;
+      padding: 6px 10px;
+      outline: none;
+      transition: all 0.15s;
+    }
+
+    .remarks-input:focus {
+      border-color: var(--border-focus);
+      background: var(--input-bg-focus);
+    }
+
+    .remarks-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .btn-resolve {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-resolve:hover { background: var(--accent-hover); }
+    .btn-resolve:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .resolved-box {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--resolved-bg);
+      border-left: 2px solid var(--success);
+      padding: 6px 10px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    .resolved-box-remarks {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .resolved-box-time {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Empty state */
+    .empty-placeholder {
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--text-muted);
+    }
+
+    .empty-placeholder svg {
+      width: 40px;
+      height: 40px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .empty-placeholder h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .empty-placeholder p {
+      font-size: 12.5px;
+      color: var(--text-dim);
+    }
+
+    /* Toast Notification */
+    #toast-notify {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    #toast-notify.visible {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-group">
+        <div class="brand-mark">S</div>
+        <div class="brand-info">
+          <span class="brand-title">Sangam Support Console</span>
+          <span class="brand-badge">WhatsApp Cloud API</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <!-- Live Status Pill -->
+        <div class="live-status">
+          <div class="status-dot"></div>
+          <span>Connected &bull; Polling (5s)</span>
+        </div>
+
+        <!-- Theme Toggle Button -->
+        <button id="btnThemeToggle" class="btn-icon" title="Toggle Light / Dark mode" aria-label="Toggle theme">
+          <span id="themeIcon" style="display: inline-flex;"></span>
+          <span id="themeLabel">Theme</span>
+        </button>
+
+        <!-- Sync Button -->
+        <button id="btnRefresh" class="btn-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+            <path d="M16 21h5v-5"></path>
+          </svg>
+          Sync
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- KPI Metric Cards -->
+    <section class="metrics-bar">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-label">Open Tickets</span>
+          <div class="metric-indicator open"></div>
+        </div>
+        <div class="metric-value" id="valOpen">0</div>
+        <div class="metric-foot">Requires admin response</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-label">Closed Tickets</span>
+          <div class="metric-indicator closed"></div>
+        </div>
+        <div class="metric-value" id="valClosed">0</div>
+        <div class="metric-foot">Notified on WhatsApp</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-label">Total Volume</span>
+          <div class="metric-indicator total"></div>
+        </div>
+        <div class="metric-value" id="valTotal">0</div>
+        <div class="metric-foot">All-time conversations</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-label">Profile Updates</span>
+          <div class="metric-indicator updates"></div>
+        </div>
+        <div class="metric-value" id="valUpdates">0</div>
+        <div class="metric-foot">Address &amp; contact logs</div>
+      </div>
+    </section>
+
+    <!-- Toolbar: Tabs & Filters -->
+    <section class="view-toolbar">
+      <div class="tabs">
+        <button class="tab-btn active" id="tabTicketsBtn">
+          Support Tickets
+          <span class="tab-count" id="badgeTicketsCount">0</span>
+        </button>
+        <button class="tab-btn" id="tabUpdatesBtn">
+          Member Updates
+          <span class="tab-count" id="badgeUpdatesCount">0</span>
+        </button>
+      </div>
+
+      <div class="search-filter-group" id="ticketsFilterControls">
+        <div class="filter-pills">
+          <button class="pill-btn active" data-filter="ALL">All</button>
+          <button class="pill-btn" data-filter="OPEN">Open</button>
+          <button class="pill-btn" data-filter="CLOSED">Closed</button>
+        </div>
+
+        <div class="search-input-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="filterSearch" class="search-input" placeholder="Search ID, phone, issue...">
+        </div>
+      </div>
+    </section>
+
+    <!-- Support Tickets Table -->
+    <div class="content-card" id="sectionTickets">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Member Phone</th>
+              <th>Category</th>
+              <th>Issue Description</th>
+              <th>Created</th>
+              <th>Status</th>
+              <th>Resolution &amp; WhatsApp Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsRows">
+            <tr>
+              <td colspan="7" class="empty-placeholder">
+                <p>Loading tickets...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Member Updates Table (Hidden by default) -->
+    <div class="content-card" id="sectionUpdates" style="display: none;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Update ID</th>
+              <th>Member Phone</th>
+              <th>Field Category</th>
+              <th>Submitted Details</th>
+              <th>Logged At</th>
+            </tr>
+          </thead>
+          <tbody id="updatesRows">
+            <tr>
+              <td colspan="5" class="empty-placeholder">
+                <p>No member updates recorded yet.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Clean Toast -->
+  <div id="toast-notify"></div>
+
+  <script>
+    // --- Theme Controller ---
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeLabel = document.getElementById('themeLabel');
+
+    const sunSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>`;
+
+    const moonSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>`;
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('sangam_theme_pref', theme);
+      if (theme === 'light') {
+        themeIcon.innerHTML = moonSvg;
+        themeLabel.textContent = 'Dark';
+      } else {
+        themeIcon.innerHTML = sunSvg;
+        themeLabel.textContent = 'Light';
+      }
+    }
+
+    // Initialize Theme (Default to dark if no saved preference)
+    const initialTheme = localStorage.getItem('sangam_theme_pref') || 'dark';
+    setTheme(initialTheme);
+
+    btnThemeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    // --- Data & Table Management ---
+    let activeView = 'TICKETS'; // 'TICKETS' | 'UPDATES'
+    let currentFilter = 'ALL';
+    let searchQuery = '';
+    const draftRemarks = {}; // Preserves unsaved remarks while typing during 5s polling
+
+    function showToast(text, isError = false) {
+      const toast = document.getElementById('toast-notify');
+      toast.textContent = text;
+      toast.style.borderColor = isError ? '#ef4444' : 'var(--border)';
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 3200);
+    }
+
+    async function loadData() {
+      try {
+        const [ticketsRes, updatesRes] = await Promise.all([
+          fetch('/admin/tickets'),
+          fetch('/admin/updates').catch(() => ({ ok: false }))
+        ]);
+
+        if (!ticketsRes.ok) throw new Error('Could not fetch tickets');
+        const ticketsData = await ticketsRes.json();
+        const tickets = ticketsData.tickets || [];
+
+        let updates = [];
+        if (updatesRes.ok) {
+          const upData = await updatesRes.json();
+          updates = upData.updates || [];
+        }
+
+        // Update KPI Counters
+        const openCount = tickets.filter(t => t.status === 'OPEN').length;
+        const closedCount = tickets.filter(t => t.status === 'CLOSED').length;
+        document.getElementById('valOpen').textContent = openCount;
+        document.getElementById('valClosed').textContent = closedCount;
+        document.getElementById('valTotal').textContent = tickets.length;
+        document.getElementById('valUpdates').textContent = updates.length;
+
+        document.getElementById('badgeTicketsCount').textContent = tickets.length;
+        document.getElementById('badgeUpdatesCount').textContent = updates.length;
+
+        // Render Active View
+        renderTicketsTable(tickets);
+        renderUpdatesTable(updates);
+      } catch (err) {
+        console.error('Data sync failed:', err);
+      }
+    }
+
+    function renderTicketsTable(tickets) {
+      const tbody = document.getElementById('ticketsRows');
+
+      // Filter tickets
+      let filtered = tickets.filter(t => {
+        if (currentFilter === 'OPEN' && t.status !== 'OPEN') return false;
+        if (currentFilter === 'CLOSED' && t.status !== 'CLOSED') return false;
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          const matchCode = (t.ticketCode || '').toLowerCase().includes(q);
+          const matchPhone = (t.phone || '').toLowerCase().includes(q);
+          const matchCat = (t.category || '').toLowerCase().includes(q);
+          const matchDesc = (t.description || t.query || '').toLowerCase().includes(q);
+          const matchRemarks = (t.remarks || '').toLowerCase().includes(q);
+          if (!matchCode && !matchPhone && !matchCat && !matchDesc && !matchRemarks) return false;
+        }
+        return true;
+      });
+
+      // Sort newest first
+      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+                <line x1="9" y1="9" x2="15" y2="9"></line>
+                <line x1="9" y1="13" x2="13" y2="13"></line>
+              </svg>
+              <h3>No tickets found</h3>
+              <p>There are no support tickets matching your current search or filter.</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(t => {
+        const isClosed = t.status === 'CLOSED';
+        const dateFormatted = new Date(t.createdAt).toLocaleDateString('en-IN', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        const statusHtml = isClosed
+          ? `<span class="status-badge closed"><span class="badge-dot"></span>Resolved</span>`
+          : `<span class="status-badge open"><span class="badge-dot"></span>Open</span>`;
+
+        const draftValue = draftRemarks[t.ticketCode] || '';
+
+        const actionHtml = isClosed
+          ? `<div class="resolved-box">
+              <div class="resolved-box-remarks">${escapeHtml(t.remarks || 'Resolved by admin')}</div>
+              <div class="resolved-box-time">Closed: ${t.closedAt ? new Date(t.closedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Done'}</div>
+            </div>`
+          : `<form class="inline-resolve-form" onsubmit="submitCloseTicket(event, '${t.ticketCode}')">
+              <input 
+                type="text" 
+                class="remarks-input" 
+                id="remarks-${t.ticketCode}" 
+                placeholder="Enter remarks for member..." 
+                value="${escapeHtml(draftValue)}"
+                oninput="draftRemarks['${t.ticketCode}'] = this.value"
+                required
+              />
+              <button type="submit" class="btn-resolve" id="btn-close-${t.ticketCode}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Close
+              </button>
+            </form>`;
+
+        return `
+          <tr>
+            <td><span class="ticket-code">#${escapeHtml(t.ticketCode)}</span></td>
+            <td>
+              <div class="phone-cell">
+                <span class="phone-number">+${escapeHtml(t.phone)}</span>
+                <a href="https://wa.me/${escapeHtml(t.phone)}" target="_blank" rel="noopener" class="wa-link" title="Open direct WhatsApp chat">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                  </svg>
+                </a>
+              </div>
+            </td>
+            <td><span class="cat-tag">${escapeHtml(t.category || 'General')}</span></td>
+            <td><div class="issue-text">${escapeHtml(t.description || t.query || '')}</div></td>
+            <td class="time-stamp">${dateFormatted}</td>
+            <td>${statusHtml}</td>
+            <td class="action-container">${actionHtml}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderUpdatesTable(updates) {
+      const tbody = document.getElementById('updatesRows');
+      if (updates.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-placeholder">
+              <h3>No member update requests yet</h3>
+              <p>When members submit Address, Email, or Family updates via WhatsApp, they will appear here.</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      // Sort newest first
+      const sorted = [...updates].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      tbody.innerHTML = sorted.map(u => {
+        const dateFormatted = new Date(u.createdAt).toLocaleDateString('en-IN', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        return `
+          <tr>
+            <td><span class="ticket-code">#UPD-${u.id}</span></td>
+            <td>
+              <div class="phone-cell">
+                <span class="phone-number">+${escapeHtml(u.phone)}</span>
+                <a href="https://wa.me/${escapeHtml(u.phone)}" target="_blank" class="wa-link">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                  </svg>
+                </a>
+              </div>
+            </td>
+            <td><span class="cat-tag">${escapeHtml(u.category)}</span></td>
+            <td><div class="issue-text">${escapeHtml(u.details)}</div></td>
+            <td class="time-stamp">${dateFormatted}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function submitCloseTicket(e, ticketCode) {
+      e.preventDefault();
+      const inputEl = document.getElementById('remarks-' + ticketCode);
+      const btnEl = document.getElementById('btn-close-' + ticketCode);
+      const remarks = inputEl ? inputEl.value.trim() : '';
+
+      if (!remarks) {
+        showToast('Please type closing remarks for the member.', true);
+        return;
+      }
+
+      btnEl.disabled = true;
+      btnEl.textContent = 'Closing...';
+
+      try {
+        const res = await fetch(`/admin/tickets/${ticketCode}/close`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ remarks })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to close ticket');
+
+        delete draftRemarks[ticketCode];
+        showToast(`Ticket #${ticketCode} closed & member notified on WhatsApp.`);
+        await loadData();
+      } catch (err) {
+        showToast(err.message, true);
+        btnEl.disabled = false;
+        btnEl.textContent = 'Close';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Tab Switching
+    document.getElementById('tabTicketsBtn').addEventListener('click', () => {
+      activeView = 'TICKETS';
+      document.getElementById('tabTicketsBtn').classList.add('active');
+      document.getElementById('tabUpdatesBtn').classList.remove('active');
+      document.getElementById('sectionTickets').style.display = 'block';
+      document.getElementById('sectionUpdates').style.display = 'none';
+      document.getElementById('ticketsFilterControls').style.display = 'flex';
+    });
+
+    document.getElementById('tabUpdatesBtn').addEventListener('click', () => {
+      activeView = 'UPDATES';
+      document.getElementById('tabUpdatesBtn').classList.add('active');
+      document.getElementById('tabTicketsBtn').classList.remove('active');
+      document.getElementById('sectionTickets').style.display = 'none';
+      document.getElementById('sectionUpdates').style.display = 'block';
+      document.getElementById('ticketsFilterControls').style.display = 'none';
+    });
+
+    // Filter Pills
+    document.querySelectorAll('.pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        loadData();
+      });
+    });
+
+    // Search input
+    document.getElementById('filterSearch').addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      loadData();
+    });
+
+    // Manual Refresh
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      loadData();
+      showToast('Data refreshed');
+    });
+
+    // Initial load & Polling interval
+    loadData();
+    setInterval(loadData, 5000);
+  </script>
+</body>
+</html>
