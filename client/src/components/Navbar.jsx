@@ -45,29 +45,6 @@ export default function Navbar({ onRefresh, theme, onToggleTheme }) {
 
       {/* Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Live Status Pill */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '7px',
-          padding: '6px 14px',
-          borderRadius: '20px',
-          background: 'var(--success-subtle)',
-          border: '1px solid var(--success)',
-          color: 'var(--success)',
-          fontSize: '12px',
-          fontWeight: 600
-        }}>
-          <span style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: 'var(--success)',
-            boxShadow: '0 0 8px var(--success)'
-          }}></span>
-          Live Sync (4s)
-        </div>
-
         {/* Theme Toggle Button */}
         <button
           onClick={onToggleTheme}
