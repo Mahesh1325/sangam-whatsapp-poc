@@ -64,6 +64,8 @@ export default function LiveChat({
       display: 'grid',
       gridTemplateColumns: '320px 1fr',
       height: '660px',
+      maxHeight: 'calc(100vh - 280px)',
+      minHeight: '480px',
       background: 'var(--surface)',
       border: '1px solid var(--border)',
       borderRadius: '12px',
@@ -75,6 +77,8 @@ export default function LiveChat({
         borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
         background: 'var(--surface)'
       }}>
         {/* Header */}
@@ -84,7 +88,8 @@ export default function LiveChat({
           background: 'var(--surface-elevated)',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
@@ -117,7 +122,7 @@ export default function LiveChat({
         </div>
 
         {/* Contact Items */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {conversations.length === 0 ? (
             <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
               <div style={{ fontSize: '26px', marginBottom: '8px' }}>💬</div>
@@ -208,7 +213,7 @@ export default function LiveChat({
       </div>
 
       {/* ─── RIGHT: Authentic WhatsApp Chat Wallpaper & Bubbles ─── */}
-      <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--wa-wallpaper)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, background: 'var(--wa-wallpaper)' }}>
         {/* Top Header */}
         <div style={{
           padding: '12px 20px',
@@ -216,7 +221,8 @@ export default function LiveChat({
           background: 'var(--surface)',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexShrink: 0
         }}>
           {selectedPhone ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -277,6 +283,7 @@ export default function LiveChat({
         {/* Message Thread (Wallpaper Background) */}
         <div style={{
           flex: 1,
+          minHeight: 0,
           padding: '20px 24px',
           overflowY: 'auto',
           display: 'flex',
@@ -371,7 +378,8 @@ export default function LiveChat({
             background: 'var(--surface)',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px'
+            gap: '10px',
+            flexShrink: 0
           }}>
           <input
             type="text"
