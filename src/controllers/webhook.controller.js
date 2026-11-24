@@ -21,9 +21,13 @@ exports.handleIncoming = async (req, res) => {
   res.sendStatus(200);
 
   try {
-    const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const value = req.body.entry?.[0]?.changes?.[0]?.value;
+    const message = value?.messages?.[0];
+    const contact = value?.contacts?.[0];
+    const profileName = contact?.profile?.name || null;
+
     if (message) {
-      await chatbotService.handleIncomingMessage(message);
+      await chatbotService.handleIncomingMessage(message, profileName);
     }
   } catch (err) {
     console.error('Error handling incoming webhook:', err);

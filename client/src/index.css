@@ -1,40 +1,46 @@
 /* Dark Theme (Default) */
 :root, [data-theme="dark"] {
-  --bg: #0a0c12;
-  --topbar-bg: rgba(10, 12, 18, 0.85);
-  --surface: #131722;
-  --surface-elevated: #1a1f2e;
-  --surface-hover: #22293d;
-  --border: #262e44;
-  --border-subtle: #1c2233;
-  --text-primary: #f1f5f9;
+  --bg: #090b10;
+  --topbar-bg: rgba(9, 11, 16, 0.85);
+  --surface: #12151f;
+  --surface-elevated: #181d2a;
+  --surface-hover: #1f2537;
+  --border: #232a3d;
+  --border-subtle: #191f2e;
+  --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
+  --tab-inactive-bg: #12151f;
+  --tab-inactive-text: #e2e8f0;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
-  --accent-subtle: rgba(37, 99, 235, 0.12);
+  --accent-subtle: rgba(37, 99, 235, 0.15);
   --success: #10b981;
-  --success-subtle: rgba(16, 185, 129, 0.12);
+  --success-subtle: rgba(16, 185, 129, 0.15);
   --warning: #f59e0b;
-  --warning-subtle: rgba(245, 158, 11, 0.12);
-  --input-bg: #0d1017;
-  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --warning-subtle: rgba(245, 158, 11, 0.15);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --wa-bubble-resident: #1e2433;
+  --wa-bubble-resident-text: #f1f5f9;
+  --wa-bubble-admin: #005c4b;
+  --wa-bubble-admin-text: #ffffff;
+  --wa-wallpaper: #0b0e14;
 }
 
 /* Light Theme */
 [data-theme="light"] {
-  --bg: #f8fafc;
-  --topbar-bg: rgba(255, 255, 255, 0.9);
+  --bg: #f4f6f9;
+  --topbar-bg: rgba(255, 255, 255, 0.95);
   --surface: #ffffff;
-  --surface-elevated: #f1f5f9;
+  --surface-elevated: #f8fafc;
   --surface-hover: #e2e8f0;
-  --border: #e2e8f0;
-  --border-subtle: #edf2f7;
+  --border: #cbd5e1;
+  --border-subtle: #e2e8f0;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-muted: #64748b;
+  --tab-inactive-bg: #ffffff;
+  --tab-inactive-text: #1e293b;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-subtle: rgba(37, 99, 235, 0.08);
@@ -42,21 +48,24 @@
   --success-subtle: rgba(5, 150, 105, 0.1);
   --warning: #d97706;
   --warning-subtle: rgba(217, 119, 6, 0.1);
-  --input-bg: #ffffff;
   --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  --wa-bubble-resident: #ffffff;
+  --wa-bubble-resident-text: #0f172a;
+  --wa-bubble-admin: #d9fdd3;
+  --wa-bubble-admin-text: #0f172a;
+  --wa-wallpaper: #efeae2;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 body {
   background-color: var(--bg);
   color: var(--text-primary);
-  font-family: var(--font-sans);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }

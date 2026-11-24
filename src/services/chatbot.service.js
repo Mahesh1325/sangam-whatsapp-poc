@@ -9,7 +9,7 @@ class ChatbotService {
   /**
    * Main entrypoint for processing any incoming message from WhatsApp Webhook
    */
-  async handleIncomingMessage(message) {
+  async handleIncomingMessage(message, profileName = null) {
     if (!message) return;
 
     const phone = message.from;
@@ -21,11 +21,16 @@ class ChatbotService {
     const actionId = interactive?.button_reply?.id || interactive?.list_reply?.id;
     const session = dataStore.getSession(phone);
 
-    console.log(`📩 [Chatbot] From ${phone} | Action: ${actionId || interactive?.type || 'none'} | Step: ${session.step} | Text: "${rawText}"`);
+    console.log(`📩 [Chatbot] From ${phone} (${profileName || 'Unknown'}) | Action: ${actionId || interactive?.type || 'none'} | Step: ${session.step} | Text: "${rawText}"`);
 
-    // Log user message to Live Chat Store
+    // Log user message to Live Chat Store with profile name
     const userDisplayMsg = rawText || (actionId ? `[Button/Option: ${actionId}]` : (interactive?.type === 'nfm_reply' ? '[Flow Submitted]' : '[Media/Other]'));
-    dataStore.addChatMessage({ phone, sender: 'user', text: userDisplayMsg });
+    await dataStore.addChatMessage({ 
+      phone, 
+      sender: 'user', 
+      text: userDisplayMsg,
+      name: profileName
+    });
 
     // 1. Global Reset / Navigation Commands
     if (actionId === 'MENU_MAIN' || ['hi', 'hello', 'menu', 'start', 'help', 'main menu'].includes(textLower)) {
@@ -138,7 +143,7 @@ class ChatbotService {
     // If ticket was not already created by flow endpoint, create it now
     let ticketCode = responseData.ticket_id;
     if (!ticketCode) {
-      const newTicket = dataStore.createTicket({
+      const newTicket = await dataStore.createTicket({
         phone,
         category,
         description,

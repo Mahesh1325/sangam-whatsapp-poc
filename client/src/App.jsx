@@ -147,58 +147,58 @@ export default function App() {
         />
 
         {/* Tab Navigation */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
           <button
             onClick={() => setActiveTab('tickets')}
             style={{
-              background: activeTab === 'tickets' ? 'var(--accent)' : 'var(--surface)',
-              color: activeTab === 'tickets' ? '#fff' : 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              padding: '9px 18px',
+              background: activeTab === 'tickets' ? 'var(--accent)' : 'var(--tab-inactive-bg)',
+              color: activeTab === 'tickets' ? '#ffffff' : 'var(--tab-inactive-text)',
+              border: activeTab === 'tickets' ? '1px solid var(--accent)' : '1px solid var(--border)',
+              padding: '10px 20px',
               borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              boxShadow: activeTab === 'tickets' ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
+              fontSize: '14px',
+              fontWeight: '700',
+              boxShadow: activeTab === 'tickets' ? '0 4px 12px rgba(37, 99, 235, 0.3)' : '0 1px 3px rgba(0,0,0,0.05)'
             }}>
             <Ticket size={16} /> Support Tickets ({tickets.length})
           </button>
           <button
             onClick={() => setActiveTab('updates')}
             style={{
-              background: activeTab === 'updates' ? 'var(--accent)' : 'var(--surface)',
-              color: activeTab === 'updates' ? '#fff' : 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              padding: '9px 18px',
+              background: activeTab === 'updates' ? 'var(--accent)' : 'var(--tab-inactive-bg)',
+              color: activeTab === 'updates' ? '#ffffff' : 'var(--tab-inactive-text)',
+              border: activeTab === 'updates' ? '1px solid var(--accent)' : '1px solid var(--border)',
+              padding: '10px 20px',
               borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              boxShadow: activeTab === 'updates' ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
+              fontSize: '14px',
+              fontWeight: '700',
+              boxShadow: activeTab === 'updates' ? '0 4px 12px rgba(37, 99, 235, 0.3)' : '0 1px 3px rgba(0,0,0,0.05)'
             }}>
             <UserCheck size={16} /> Member Updates ({updates.length})
           </button>
           <button
             onClick={() => setActiveTab('chat')}
             style={{
-              background: activeTab === 'chat' ? 'var(--accent)' : 'var(--surface)',
-              color: activeTab === 'chat' ? '#fff' : 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              padding: '9px 18px',
+              background: activeTab === 'chat' ? 'var(--accent)' : 'var(--tab-inactive-bg)',
+              color: activeTab === 'chat' ? '#ffffff' : 'var(--tab-inactive-text)',
+              border: activeTab === 'chat' ? '1px solid var(--accent)' : '1px solid var(--border)',
+              padding: '10px 20px',
               borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              boxShadow: activeTab === 'chat' ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
+              fontSize: '14px',
+              fontWeight: '700',
+              boxShadow: activeTab === 'chat' ? '0 4px 12px rgba(37, 99, 235, 0.3)' : '0 1px 3px rgba(0,0,0,0.05)'
             }}>
             <MessageSquare size={16} /> Live WhatsApp Chat ({conversations.length})
           </button>

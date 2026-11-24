@@ -38,8 +38,8 @@ exports.handleFlowSubmission = async (req, res) => {
   console.log(`   • Ticket ID:    ${ticketId}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-  // Store in in-memory store linked to this exact member
-  dataStore.createTicket({
+  // Store in database linked to this exact member
+  await dataStore.createTicket({
     ticketCode: ticketId,
     phone: memberPhone,
     category,

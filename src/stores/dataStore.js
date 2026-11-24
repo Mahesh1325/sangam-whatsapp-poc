@@ -5,6 +5,9 @@
 const bcrypt = require('bcryptjs');
 const supabase = require('../config/supabase');
 
+// In-memory cache for customer WhatsApp profile names
+const profileNames = new Map(); // phone -> name
+
 // Fast volatile state for active conversation turns & flow tokens
 const sessions = new Map();     // phone -> { step: string, category?: string, draft?: string }
 const flowSessions = new Map(); // flowToken -> { phone: string, createdAt: string }
@@ -378,7 +381,12 @@ module.exports = {
   },
 
   // --- Live Chat Messages ---
-  async addChatMessage({ phone, sender, text }) {
+  async addChatMessage({ phone, sender, text, name }) {
+    if (name) {
+      profileNames.set(phone, name);
+    }
+    const customerName = name || profileNames.get(phone) || null;
+
     if (supabase) {
       try {
         const { data, error } = await supabase
@@ -395,6 +403,7 @@ module.exports = {
           return {
             id: data.id,
             phone: data.phone,
+            name: customerName,
             sender: data.sender,
             text: data.text,
             timestamp: data.created_at,
@@ -408,6 +417,7 @@ module.exports = {
     const msg = {
       id: chatMsgCounter++,
       phone: phone || 'WhatsApp User',
+      name: customerName,
       sender: sender || 'user',
       text: text || '',
       timestamp: new Date().toISOString(),
@@ -418,6 +428,7 @@ module.exports = {
   },
 
   async getChatHistory(phone) {
+    const customerName = profileNames.get(phone) || null;
     if (supabase) {
       try {
         let query = supabase.from('chat_messages').select('*').order('created_at', { ascending: true });
@@ -429,6 +440,7 @@ module.exports = {
           return data.map((m) => ({
             id: m.id,
             phone: m.phone,
+            name: customerName,
             sender: m.sender,
             text: m.text,
             timestamp: m.created_at,
@@ -459,6 +471,7 @@ module.exports = {
             if (!convMap.has(msg.phone)) {
               convMap.set(msg.phone, {
                 phone: msg.phone,
+                name: profileNames.get(msg.phone) || null,
                 lastMessage: msg.text,
                 lastSender: msg.sender,
                 timestamp: msg.created_at,
@@ -478,6 +491,7 @@ module.exports = {
       if (!convMap.has(msg.phone)) {
         convMap.set(msg.phone, {
           phone: msg.phone,
+          name: profileNames.get(msg.phone) || null,
           lastMessage: msg.text,
           lastSender: msg.sender,
           timestamp: msg.timestamp,
