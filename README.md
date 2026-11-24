@@ -1,99 +1,114 @@
-# Sangam WhatsApp Cloud API Support Bot (POC)
+# Sangam Community WhatsApp Support POC
 
-A production-structured Node.js Express service for **Sangam Community Association**, integrating Meta WhatsApp Cloud API, interactive native **WhatsApp Flows**, and a **Live Admin Operations Console**.
-
----
-
-## ⏱️ WhatsApp 24-Hour Conversation Window & Count Mechanics
-
-### 1. Session Activation
-A **24-hour customer service window** opens immediately when:
-* Your business responds to a user message, OR
-* A template message is delivered.
-
-### 2. Initial Count (Hour 0–24)
-* All free-form messages, buttons, WhatsApp Flows, and back-and-forth exchanges within this active 24-hour period are **bundled together and counted as 1 single conversation**.
-* You are **not** charged per individual message sent.
-
-### 3. In-Between Quiet Period (No Count)
-* If messages continue back and forth or if there is a lull with zero messaging within that 24-hour block, **no new conversation counts or charges occur**.
-
-### 4. Second Conversation Count (After 24 Hours)
-* If the 24-hour window fully elapses and a new message is subsequently sent or received, a **fresh 24-hour session starts**, incrementing the log to **2 conversations**.
+A unified full-stack application built with **React (Vite)** and **Node.js (Express)**, integrated with **Meta WhatsApp Cloud API**, **WhatsApp Flows**, and **Supabase PostgreSQL**.
 
 ---
 
-## 💰 WhatsApp Cloud API Pricing Summary
+## 📁 Clean Directory Structure
 
-* **Free Tier:** Every WhatsApp Business Account receives **1,000 FREE Service (user-initiated) Conversations every single month**.
-* **Flows Surcharge:** **₹0.00** (Meta charges zero extra fees for WhatsApp Flows).
-* **Cost Outside Free Tier (India approx.):**
-  * **Service (Support/Inbound):** ~₹0.35 per 24-hour window.
-  * **Utility (Receipts/Status):** ~₹0.12–₹0.15 per 24-hour window.
-  * **Marketing (Promotions/Broadcasts):** ~₹0.70–₹0.80 per 24-hour window.
-
----
-
-## 🚀 Quick Start Guide
-
-### 1. Installation & Environment
-Ensure dependencies are installed and `.env` is configured:
-
-```bash
-npm install
+```text
+sangam-poc/
+├── client/                     # ⚛️ React UI (Vite)
+│   ├── src/
+│   │   ├── components/         # Modular UI Components
+│   │   │   ├── Navbar.jsx          # Header, Sync & Logout
+│   │   │   ├── KpiCards.jsx        # Real-time KPI Metric cards
+│   │   │   ├── TicketList.jsx      # Ticket queue with search & filters
+│   │   │   ├── MemberUpdatesList.jsx# Member profile change logs
+│   │   │   └── LiveChat.jsx        # Two-way WhatsApp chat console
+│   │   ├── services/
+│   │   │   └── api.js              # Centralized backend API client
+│   │   ├── App.jsx             # Main dashboard layout & state machine
+│   │   ├── index.css           # Global theme variables & styles
+│   │   └── main.jsx            # React root entry
+│   ├── package.json            # Client dependencies (React, Lucide)
+│   └── vite.config.js          # Vite config (proxies /admin to Express)
+│
+├── public/                     # 📦 Bundled Static Assets (Served by Express)
+│   ├── index.html
+│   └── assets/
+│
+├── src/                        # 🚀 Node.js / Express Server
+│   ├── config/
+│   │   ├── env.js              # Environment variable validation
+│   │   └── supabase.js         # Supabase client initializer
+│   ├── controllers/
+│   │   ├── admin.controller.js     # Ticket resolution & live chat APIs
+│   │   ├── auth.controller.js      # Session login & cookie management
+│   │   ├── dashboard.controller.js # Serves built React SPA
+│   │   ├── flow.controller.js      # Meta WhatsApp Flows endpoint handler
+│   │   └── webhook.controller.js   # WhatsApp webhook verification & receiver
+│   ├── middlewares/
+│   │   └── auth.middleware.js      # JWT & HTTP-only cookie protection
+│   ├── routes/
+│   │   ├── admin.routes.js         # /admin/tickets, /admin/chat/*
+│   │   ├── auth.routes.js          # /login, /api/login, /logout
+│   │   ├── dashboard.routes.js     # /dashboard
+│   │   ├── flow.routes.js          # /whatsapp/flow-endpoint
+│   │   └── webhook.routes.js       # /webhook/whatsapp
+│   ├── services/
+│   │   ├── chatbot.service.js      # Conversational state machine & menus
+│   │   └── whatsapp.service.js     # Meta Cloud API message dispatcher
+│   ├── stores/
+│   │   └── dataStore.js            # Hybrid Supabase DB + In-Memory fallback
+│   ├── views/
+│   │   ├── login.html              # Secure admin login view
+│   │   └── dashboard.html          # HTML fallback console
+│   └── app.js                  # Express app & middleware setup
+│
+├── .env                        # Local secret keys (ignored by git)
+├── .env.example                # Sample environment template
+├── create-admin.js             # 🔐 Secure CLI tool to create admins (masked)
+├── package.json                # Root scripts (start, build:client, create-admin)
+├── server.js                   # Server bootstrap entry point
+├── start-tunnel.bat            # Local ngrok tunnel runner
+└── supabase-schema.sql         # Supabase PostgreSQL schema with RLS
 ```
 
-Configure your `.env` variables:
+---
+
+## ⚡ Quick Start
+
+### 1. Install & Setup
+```bash
+# In project root
+npm install
+cd client && npm install && cd ..
+```
+
+### 2. Configure `.env`
+Create `.env` using `.env.example`:
 ```env
 PORT=3000
 VERIFY_TOKEN=1325
 PHONE_NUMBER_ID=1224209670779871
-WHATSAPP_ACCESS_TOKEN=EAAT5Tq...
+WHATSAPP_ACCESS_TOKEN=your_token
 FLOW_ID=2346029172866499
 FLOW_MODE=published
+JWT_SECRET=super_secret_jwt_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 2. Run the Server
+### 3. Create Admin User (CLI)
 ```bash
-node server.js
+npm run create-admin
 ```
-* **Live Admin Console:** `http://localhost:3000/dashboard`
-* **Webhook URL:** `http://localhost:3000/webhook/whatsapp`
-* **Flow Endpoint:** `http://localhost:3000/whatsapp/flow-endpoint`
+Prompts for username and password with hidden terminal masking (`*`).
 
-### 3. Start Public Tunnel (ngrok)
-Run the pre-configured starter script:
-```powershell
-.\start-tunnel.bat
+### 4. Build & Run Full-Stack App
+```bash
+# Build React client into public/
+npm run build:client
+
+# Start unified Express server
+npm start
 ```
-Configure your public URL in Meta Developer Portal:
-* **Callback URL:** `https://<your-tunnel-domain>/webhook/whatsapp`
-* **Verify Token:** `1325` (must match `.env`)
-* **Webhook Fields:** Subscribe to `messages`
+Open **`http://localhost:3000/dashboard`** to log in and use the console!
 
 ---
 
-## 📱 Bot Capabilities & User Flows
-
-1. **Main Menu (`"Hi"`, `"Menu"`, `"Start"`):**
-   * Reply buttons: **[ Info ]**, **[ Update Details ]**, **[ Raise a Ticket ]**.
-2. **Interactive Directory ("Info"):**
-   * Native WhatsApp List with **Membership Rules**, **Upcoming Events**, and **Office Contact**.
-3. **Multi-Step Member Updates ("Update Details"):**
-   * Interactive buttons for **Phone/Email**, **Address**, and **Family Info**.
-   * Logs updates in real-time to memory and the Admin Dashboard.
-4. **WhatsApp Flows ("Raise a Ticket"):**
-   * Renders native in-app form for **Category**, **Priority**, and **Issue Description**.
-   * Emits dynamic `flow_token` (`flow_<phone>_<timestamp>`) to associate incoming submissions with the member.
-   * Auto-generates Ticket ID (`#TKT-501`) and sends a terminal success screen.
-5. **Check My Tickets:**
-   * Shows historical tickets, open/closed status, and admin closing remarks directly in WhatsApp.
-
----
-
-## 🖥️ Live Operations Dashboard (`GET /dashboard`)
-
-* **Real-time Live Polling:** Auto-refreshes every 5 seconds.
-* **KPI Metrics:** Displays Open Tickets, Closed Tickets, Total Volume, and Profile Update Requests.
-* **One-Click Resolution:** Input admin remarks, click **"Close"**, and the system immediately closes the ticket and dispatches closing remarks to the member's WhatsApp.
-* **Theme Support:** Clean, modern UI with a built-in **Dark / Light mode** toggle.
+## 🛠️ Development Mode (With Hot-Reload)
+Run server and React client concurrently:
+- **Terminal 1 (Server):** `npm start` (Runs on port 3000)
+- **Terminal 2 (Client):** `npm run dev:client` (Vite dev server at `http://localhost:5173`)

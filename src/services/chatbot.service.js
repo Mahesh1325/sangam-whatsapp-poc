@@ -23,6 +23,10 @@ class ChatbotService {
 
     console.log(`📩 [Chatbot] From ${phone} | Action: ${actionId || interactive?.type || 'none'} | Step: ${session.step} | Text: "${rawText}"`);
 
+    // Log user message to Live Chat Store
+    const userDisplayMsg = rawText || (actionId ? `[Button/Option: ${actionId}]` : (interactive?.type === 'nfm_reply' ? '[Flow Submitted]' : '[Media/Other]'));
+    dataStore.addChatMessage({ phone, sender: 'user', text: userDisplayMsg });
+
     // 1. Global Reset / Navigation Commands
     if (actionId === 'MENU_MAIN' || ['hi', 'hello', 'menu', 'start', 'help', 'main menu'].includes(textLower)) {
       dataStore.clearSession(phone);

@@ -696,6 +696,170 @@
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Live Chat Console Styles */
+    .chat-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: 600px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .chat-sidebar {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--thead-bg);
+    }
+
+    .chat-sidebar-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .conv-list {
+      flex: 1;
+      overflow-y: auto;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .conv-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .conv-item:hover, .conv-item.active {
+      background: var(--surface-hover);
+    }
+
+    .conv-phone {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .conv-preview {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-main {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+    }
+
+    .chat-main-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-elevated);
+    }
+
+    .chat-window {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--bg);
+    }
+
+    .chat-bubble {
+      max-width: 65%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .chat-bubble.user {
+      align-self: flex-start;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-bottom-left-radius: 2px;
+    }
+
+    .chat-bubble.admin {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .bubble-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .chat-bubble.admin .bubble-meta {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .chat-input-area {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--surface-elevated);
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .chat-input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-send {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0 18px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-send:hover {
+      background: var(--accent-hover);
+    }
   </style>
 </head>
 <body>
@@ -733,6 +897,16 @@
           </svg>
           Sync
         </button>
+
+        <!-- Secure Logout Button -->
+        <a href="/logout" class="btn-icon" style="color: #ef4444; text-decoration: none; border-color: rgba(239, 68, 68, 0.3);" title="Sign out of Console">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Logout
+        </a>
       </div>
     </div>
   </nav>
@@ -789,6 +963,10 @@
         <button class="tab-btn" id="tabUpdatesBtn">
           Member Updates
           <span class="tab-count" id="badgeUpdatesCount">0</span>
+        </button>
+        <button class="tab-btn" id="tabChatBtn">
+          💬 Live WhatsApp Chat
+          <span class="tab-count" id="badgeChatCount">0</span>
         </button>
       </div>
 
@@ -857,6 +1035,37 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Live WhatsApp Chat Console (Hidden by default) -->
+    <div class="chat-layout" id="sectionChat" style="display: none;">
+      <!-- Sidebar / Conversations List -->
+      <aside class="chat-sidebar">
+        <div class="chat-sidebar-header">Conversations</div>
+        <ul class="conv-list" id="convList">
+          <li style="padding: 16px; font-size: 12px; color: var(--text-muted); text-align: center;">No active chats yet.</li>
+        </ul>
+      </aside>
+
+      <!-- Main Chat Area -->
+      <section class="chat-main">
+        <div class="chat-main-header">
+          <div>
+            <strong id="activeChatPhone">Select a conversation</strong>
+            <div style="font-size: 11px; color: var(--text-muted);">Direct two-way WhatsApp live messaging</div>
+          </div>
+          <span class="brand-badge" style="background: var(--success-subtle); color: var(--success); border: 1px solid var(--success-border);">24h Window Active</span>
+        </div>
+
+        <div class="chat-window" id="chatWindow">
+          <div style="margin: auto; color: var(--text-muted); font-size: 13px;">Select a resident on the left to start chatting.</div>
+        </div>
+
+        <form class="chat-input-area" id="chatReplyForm" onsubmit="sendLiveReply(event)">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Type a WhatsApp reply to resident..." disabled autocomplete="off">
+          <button type="submit" class="btn-send" id="btnSendChat" disabled>Send</button>
+        </form>
+      </section>
     </div>
 
   </main>
@@ -1151,8 +1360,10 @@
       activeView = 'TICKETS';
       document.getElementById('tabTicketsBtn').classList.add('active');
       document.getElementById('tabUpdatesBtn').classList.remove('active');
+      document.getElementById('tabChatBtn').classList.remove('active');
       document.getElementById('sectionTickets').style.display = 'block';
       document.getElementById('sectionUpdates').style.display = 'none';
+      document.getElementById('sectionChat').style.display = 'none';
       document.getElementById('ticketsFilterControls').style.display = 'flex';
     });
 
@@ -1160,10 +1371,133 @@
       activeView = 'UPDATES';
       document.getElementById('tabUpdatesBtn').classList.add('active');
       document.getElementById('tabTicketsBtn').classList.remove('active');
+      document.getElementById('tabChatBtn').classList.remove('active');
       document.getElementById('sectionTickets').style.display = 'none';
       document.getElementById('sectionUpdates').style.display = 'block';
+      document.getElementById('sectionChat').style.display = 'none';
       document.getElementById('ticketsFilterControls').style.display = 'none';
     });
+
+    document.getElementById('tabChatBtn').addEventListener('click', () => {
+      activeView = 'CHAT';
+      document.getElementById('tabChatBtn').classList.add('active');
+      document.getElementById('tabTicketsBtn').classList.remove('active');
+      document.getElementById('tabUpdatesBtn').classList.remove('active');
+      document.getElementById('sectionTickets').style.display = 'none';
+      document.getElementById('sectionUpdates').style.display = 'none';
+      document.getElementById('sectionChat').style.display = 'grid';
+      document.getElementById('ticketsFilterControls').style.display = 'none';
+      loadConversations();
+    });
+
+    // --- Live Chat Logic ---
+    let selectedChatPhone = null;
+
+    async function loadConversations() {
+      try {
+        const res = await fetch('/admin/chat/conversations');
+        const data = await res.json();
+        const convs = data.conversations || [];
+        const badgeEl = document.getElementById('badgeChatCount');
+        if (badgeEl) badgeEl.textContent = convs.length;
+
+        const listEl = document.getElementById('convList');
+        if (!convs.length) {
+          listEl.innerHTML = '<li style="padding: 16px; font-size: 12px; color: var(--text-muted); text-align: center;">No active chats yet.</li>';
+          return;
+        }
+
+        listEl.innerHTML = convs.map(c => `
+          <li class="conv-item ${c.phone === selectedChatPhone ? 'active' : ''}" onclick="selectChat('${c.phone}')">
+            <div class="conv-phone">
+              <span>${c.phone}</span>
+              <span style="font-size: 10px; font-weight: normal; color: var(--text-muted);">
+                ${new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+            <div class="conv-preview">${escapeHtml(c.lastMessage || '')}</div>
+          </li>
+        `).join('');
+
+        // If no phone selected yet, select first one
+        if (!selectedChatPhone && convs.length > 0) {
+          selectChat(convs[0].phone);
+        } else if (selectedChatPhone) {
+          loadChatHistory(selectedChatPhone);
+        }
+      } catch (err) {
+        console.error('Error loading conversations:', err);
+      }
+    }
+
+    async function selectChat(phone) {
+      selectedChatPhone = phone;
+      document.getElementById('activeChatPhone').textContent = phone;
+      document.getElementById('chatInput').disabled = false;
+      document.getElementById('btnSendChat').disabled = false;
+      document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+      await loadChatHistory(phone);
+    }
+
+    async function loadChatHistory(phone) {
+      try {
+        const res = await fetch(`/admin/chat/${phone}`);
+        const data = await res.json();
+        const msgs = data.messages || [];
+        const winEl = document.getElementById('chatWindow');
+
+        if (!msgs.length) {
+          winEl.innerHTML = '<div style="margin: auto; color: var(--text-muted); font-size: 13px;">No messages exchanged yet.</div>';
+          return;
+        }
+
+        winEl.innerHTML = msgs.map(m => `
+          <div class="chat-bubble ${m.sender}">
+            <div>${escapeHtml(m.text)}</div>
+            <div class="bubble-meta">
+              <span>${m.sender === 'user' ? 'Resident' : 'Admin'}</span> &bull; 
+              <span>${new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          </div>
+        `).join('');
+
+        winEl.scrollTop = winEl.scrollHeight;
+      } catch (err) {
+        console.error('Error loading chat history:', err);
+      }
+    }
+
+    async function sendLiveReply(e) {
+      e.preventDefault();
+      if (!selectedChatPhone) return;
+
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      const btn = document.getElementById('btnSendChat');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/admin/chat/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: selectedChatPhone, message: text })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to send WhatsApp message');
+
+        showToast(`Replied to ${selectedChatPhone} on WhatsApp.`);
+        await loadChatHistory(selectedChatPhone);
+        await loadConversations();
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        btn.disabled = false;
+        input.focus();
+      }
+    }
 
     // Filter Pills
     document.querySelectorAll('.pill-btn').forEach(btn => {
@@ -1189,7 +1523,12 @@
 
     // Initial load & Polling interval
     loadData();
-    setInterval(loadData, 5000);
+    setInterval(() => {
+      loadData();
+      if (activeView === 'CHAT') {
+        loadConversations();
+      }
+    }, 4000);
   </script>
 </body>
 </html>
