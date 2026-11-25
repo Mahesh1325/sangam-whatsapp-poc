@@ -3,10 +3,36 @@ const whatsapp = require('./whatsapp.service');
 const gemini = require('./gemini.service');
 const env = require('../config/env');
 
+// Anti-Spam & Token Optimization Guards
+const voiceRateLimits = new Map(); // phone -> [timestamp1, timestamp2, ...]
+const MAX_VOICE_NOTES_PER_WINDOW = 5;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const MIN_AUDIO_BUFFER_BYTES = 4000;         // ~1.5 seconds Opus audio threshold
+
 /**
  * Chatbot Service: Handles incoming message logic and conversation state transitions
  */
 class ChatbotService {
+  /**
+   * Helper: Check if a user has exceeded voice note rate limits (Anti-Spam Guard)
+   */
+  checkVoiceRateLimit(phone) {
+    const now = Date.now();
+    const timestamps = (voiceRateLimits.get(phone) || []).filter(
+      (ts) => now - ts < RATE_LIMIT_WINDOW_MS
+    );
+
+    if (timestamps.length >= MAX_VOICE_NOTES_PER_WINDOW) {
+      const oldestInWindow = timestamps[0];
+      const waitMinutes = Math.ceil((oldestInWindow + RATE_LIMIT_WINDOW_MS - now) / 60000);
+      return { allowed: false, waitMinutes: Math.max(1, waitMinutes) };
+    }
+
+    timestamps.push(now);
+    voiceRateLimits.set(phone, timestamps);
+    return { allowed: true };
+  }
+
   /**
    * Main entrypoint for processing any incoming message from WhatsApp Webhook
    */
@@ -385,6 +411,21 @@ class ChatbotService {
 
     console.log(`🎙️ [Chatbot] Voice note received from ${phone} (${profileName || 'Unknown'}) | Media ID: ${mediaId} | Mime: ${mimeType}`);
 
+    // Guard 1: Anti-Spam / Rate Limit (Max 5 voice notes per 10 mins per resident)
+    const rateCheck = this.checkVoiceRateLimit(phone);
+    if (!rateCheck.allowed) {
+      console.warn(`⏳ [Chatbot] Rate limit exceeded for ${phone}. Max ${MAX_VOICE_NOTES_PER_WINDOW} notes per 10m.`);
+      await whatsapp.sendReplyButtons(
+        phone,
+        `நீங்கள் தொடர்ந்து பல வாய்ஸ் மெசேஜ்களை அனுப்பியுள்ளீர்கள். உங்கள் பாதுகாப்பிற்காக ${rateCheck.waitMinutes} நிமிடங்கள் கழித்து வாய்ஸ் அனுப்பவும். அல்லது கீழே உள்ள ஆப்ஷனை கிளிக் பண்ணுங்க.`,
+        [
+          { id: 'MENU_MAIN', title: 'Main Menu' },
+          { id: 'MENU_TICKET', title: 'Raise Ticket' },
+        ]
+      );
+      return;
+    }
+
     if (!mediaId) {
       await whatsapp.sendTextMessage(phone, 'மன்னிக்கவும், உங்கள் குரல் பதிவை பெற முடியவில்லை.');
       return;
@@ -396,6 +437,17 @@ class ChatbotService {
       await whatsapp.sendReplyButtons(
         phone,
         'மன்னிக்கவும், உங்கள் குரல் பதிவை பதிவிறக்க முடியவில்லை. தயவுசெய்து மீண்டும் அனுப்பவும் அல்லது Main Menu-வை பார்க்கவும்.',
+        [{ id: 'MENU_MAIN', title: 'Main Menu' }]
+      );
+      return;
+    }
+
+    // Guard 2: Filter Blank / Accidental Short Audio (< ~1.5s / 4KB)
+    if (media.buffer.length < MIN_AUDIO_BUFFER_BYTES) {
+      console.warn(`⚠️ [Chatbot] Audio from ${phone} too short/empty (${media.buffer.length} bytes). Skipping LLM call.`);
+      await whatsapp.sendReplyButtons(
+        phone,
+        'உங்கள் வாய்ஸ் மெசேஜ் மிகவும் சிறியதாக உள்ளது (Clear-ஆக கேட்கவில்லை). தயவுசெய்து உங்கள் கோரிக்கையை முழுமையாக பேசி அனுப்பவும்.',
         [{ id: 'MENU_MAIN', title: 'Main Menu' }]
       );
       return;
