@@ -417,7 +417,7 @@ class ChatbotService {
       console.warn(`⏳ [Chatbot] Rate limit exceeded for ${phone}. Max ${MAX_VOICE_NOTES_PER_WINDOW} notes per 10m.`);
       await whatsapp.sendReplyButtons(
         phone,
-        `நீங்கள் தொடர்ந்து பல வாய்ஸ் மெசேஜ்களை அனுப்பியுள்ளீர்கள். உங்கள் பாதுகாப்பிற்காக ${rateCheck.waitMinutes} நிமிடங்கள் கழித்து வாய்ஸ் அனுப்பவும். அல்லது கீழே உள்ள ஆப்ஷனை கிளிக் பண்ணுங்க.`,
+        `You have sent multiple voice messages in a short time. Please wait ${rateCheck.waitMinutes} minute(s) before sending another voice note, or tap an option below:`,
         [
           { id: 'MENU_MAIN', title: 'Main Menu' },
           { id: 'MENU_TICKET', title: 'Raise Ticket' },
@@ -427,7 +427,7 @@ class ChatbotService {
     }
 
     if (!mediaId) {
-      await whatsapp.sendTextMessage(phone, 'மன்னிக்கவும், உங்கள் குரல் பதிவை பெற முடியவில்லை.');
+      await whatsapp.sendTextMessage(phone, 'Sorry, we could not retrieve your voice note ID. Please try again.');
       return;
     }
 
@@ -436,7 +436,7 @@ class ChatbotService {
     if (!media || !media.buffer) {
       await whatsapp.sendReplyButtons(
         phone,
-        'மன்னிக்கவும், உங்கள் குரல் பதிவை பதிவிறக்க முடியவில்லை. தயவுசெய்து மீண்டும் அனுப்பவும் அல்லது Main Menu-வை பார்க்கவும்.',
+        'Sorry, we were unable to download your voice note. Please send it again or explore the menu below:',
         [{ id: 'MENU_MAIN', title: 'Main Menu' }]
       );
       return;
@@ -447,19 +447,19 @@ class ChatbotService {
       console.warn(`⚠️ [Chatbot] Audio from ${phone} too short/empty (${media.buffer.length} bytes). Skipping LLM call.`);
       await whatsapp.sendReplyButtons(
         phone,
-        'உங்கள் வாய்ஸ் மெசேஜ் மிகவும் சிறியதாக உள்ளது (Clear-ஆக கேட்கவில்லை). தயவுசெய்து உங்கள் கோரிக்கையை முழுமையாக பேசி அனுப்பவும்.',
+        'Your voice note was too short or unclear. Please record your complete message again, or choose an option below:',
         [{ id: 'MENU_MAIN', title: 'Main Menu' }]
       );
       return;
     }
 
-    // 2. Process audio with Gemini (Transcribe + Detect Intent + Tamil Reply + Buttons)
+    // 2. Process audio with Gemini (Transcribe + Detect Intent + English Reply + Buttons)
     const result = await gemini.processVoiceNote(media.buffer, media.mimeType || mimeType);
 
     if (!result) {
       await whatsapp.sendReplyButtons(
         phone,
-        'மன்னிக்கவும், உங்கள் குரல் பதிவை செயலாக்குவதில் சிரமம் ஏற்பட்டது. கீழே உள்ள Option-ஐ தேர்வு பண்ணுங்க.',
+        'Sorry, we encountered an issue processing your voice note. Please choose an option from the menu below:',
         [
           { id: 'MENU_MAIN', title: 'Main Menu' },
           { id: 'MENU_TICKET', title: 'Raise Ticket' },
@@ -469,7 +469,7 @@ class ChatbotService {
     }
 
     // 3. Log transcribed user voice message in Live Chat
-    const userVoiceText = `🎤 [Voice Note]: "${result.transcript || 'குரல் பதிவு'}"`;
+    const userVoiceText = `🎤 [Voice Note]: "${result.transcript || 'Voice note'}"`;
     await dataStore.addChatMessage({
       phone,
       sender: 'user',
@@ -483,30 +483,32 @@ class ChatbotService {
       title: (b.title || 'Option').slice(0, 20),
     }));
 
-    if (buttons.length === 0) {
+    if (buttons.length === 0 || result.intent === 'IRRELEVANT') {
       buttons = [
         { id: 'MENU_MAIN', title: 'Main Menu' },
         { id: 'MENU_TICKET', title: 'Raise Ticket' },
       ];
     }
 
-    // 5. Send Tamil reply with buttons back to WhatsApp user
-    await whatsapp.sendReplyButtons(phone, result.reply_tamil, buttons);
+    const replyText = result.reply_text || result.reply_tamil || 'Thank you for contacting Sangam Support. Please select an option below:';
+
+    // 5. Send English reply with buttons back to WhatsApp user
+    await whatsapp.sendReplyButtons(phone, replyText, buttons);
 
     // 6. Log bot reply to Live Chat
     await dataStore.addChatMessage({
       phone,
       sender: 'bot',
-      text: result.reply_tamil,
+      text: replyText,
       name: 'Sangam Bot',
     });
 
-    // 7. If the user's intent was to raise a ticket or complaint, automatically create ticket in Supabase
+    // 7. If the user's intent was to raise a ticket, automatically create ticket in Supabase
     if (result.intent === 'RAISE_TICKET') {
       try {
         const newTicket = await dataStore.createTicket({
           phone,
-          category: 'Voice Grievance',
+          category: 'Voice Support',
           description: result.transcript || result.summary || 'Voice support request',
         });
         console.log(`🎫 [Chatbot] Auto-created support ticket #${newTicket.ticketCode} from voice note`);
