@@ -11,6 +11,8 @@ module.exports = {
   JWT_SECRET: process.env.JWT_SECRET || 'sangam_super_secure_jwt_secret_2026',
   SUPABASE_URL: process.env.SUPABASE_URL || '',
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  SARVAM_API_KEY: process.env.SARVAM_API_KEY || '',
   get GRAPH_URL() {
     return `https://graph.facebook.com/${this.GRAPH_API_VERSION}/${this.PHONE_NUMBER_ID}/messages`;
   },

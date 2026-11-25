@@ -130,6 +130,58 @@ async function sendFlowMessage({
 }
 
 /**
+ * Download media buffer (voice note, audio, image) from Meta Cloud API
+ */
+async function downloadMediaBuffer(mediaId) {
+  try {
+    const metaRes = await fetch(`https://graph.facebook.com/${env.GRAPH_API_VERSION}/${mediaId}`, {
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+      },
+    });
+
+    if (!metaRes.ok) {
+      console.error(`[WhatsApp Media] Failed to get media metadata for ID ${mediaId}:`, metaRes.status, metaRes.statusText);
+      return null;
+    }
+
+    const mediaInfo = await metaRes.json();
+    const mediaUrl = mediaInfo.url;
+    const mimeType = mediaInfo.mime_type || 'audio/ogg';
+
+    if (!mediaUrl) {
+      console.error('[WhatsApp Media] No direct download URL in Meta response for ID:', mediaId);
+      return null;
+    }
+
+    // Download actual binary stream from CDN
+    const fileRes = await fetch(mediaUrl, {
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+      },
+    });
+
+    if (!fileRes.ok) {
+      console.error(`[WhatsApp Media] Failed to download media binary from ${mediaUrl}:`, fileRes.status, fileRes.statusText);
+      return null;
+    }
+
+    const arrayBuffer = await fileRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    console.log(`📥 [WhatsApp Media] Downloaded ${buffer.length} bytes (${mimeType}) for media ID: ${mediaId}`);
+    return {
+      buffer,
+      mimeType,
+      fileSize: mediaInfo.file_size,
+    };
+  } catch (err) {
+    console.error('[WhatsApp Media] Network/download error:', err.message);
+    return null;
+  }
+}
+
+/**
  * Send 3-Button Main Menu
  */
 async function sendMainMenu(to, customGreeting) {
@@ -148,4 +200,5 @@ module.exports = {
   sendListMessage,
   sendFlowMessage,
   sendMainMenu,
+  downloadMediaBuffer,
 };

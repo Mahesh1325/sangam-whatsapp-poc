@@ -1,5 +1,6 @@
 const dataStore = require('../stores/dataStore');
 const whatsapp = require('./whatsapp.service');
+const gemini = require('./gemini.service');
 const env = require('../config/env');
 
 /**
@@ -13,6 +14,13 @@ class ChatbotService {
     if (!message) return;
 
     const phone = message.from;
+
+    // 0. Handle Audio / Voice Note messages (Pipeline 1: Gemini Multimodal)
+    if (message.type === 'audio' || message.audio) {
+      await this.handleIncomingVoiceNote(phone, message, profileName);
+      return;
+    }
+
     const rawText = message.text?.body?.trim() || '';
     const textLower = rawText.toLowerCase();
 
@@ -367,6 +375,93 @@ class ChatbotService {
       { id: 'MENU_TICKET', title: 'Raise a Ticket' },
       { id: 'MENU_MAIN', title: 'Main Menu' },
     ]);
+  }
+
+  // --- Handlers for Voice Notes (Pipeline 1: Multimodal Gemini) ---
+  async handleIncomingVoiceNote(phone, message, profileName) {
+    const audioObj = message.audio;
+    const mediaId = audioObj?.id;
+    const mimeType = audioObj?.mime_type || 'audio/ogg';
+
+    console.log(`🎙️ [Chatbot] Voice note received from ${phone} (${profileName || 'Unknown'}) | Media ID: ${mediaId} | Mime: ${mimeType}`);
+
+    if (!mediaId) {
+      await whatsapp.sendTextMessage(phone, 'மன்னிக்கவும், உங்கள் குரல் பதிவை பெற முடியவில்லை.');
+      return;
+    }
+
+    // 1. Download media binary from WhatsApp Cloud API
+    const media = await whatsapp.downloadMediaBuffer(mediaId);
+    if (!media || !media.buffer) {
+      await whatsapp.sendReplyButtons(
+        phone,
+        'மன்னிக்கவும், உங்கள் குரல் பதிவை பதிவிறக்க முடியவில்லை. தயவுசெய்து மீண்டும் அனுப்பவும் அல்லது Main Menu-வை பார்க்கவும்.',
+        [{ id: 'MENU_MAIN', title: 'Main Menu' }]
+      );
+      return;
+    }
+
+    // 2. Process audio with Gemini (Transcribe + Detect Intent + Tamil Reply + Buttons)
+    const result = await gemini.processVoiceNote(media.buffer, media.mimeType || mimeType);
+
+    if (!result) {
+      await whatsapp.sendReplyButtons(
+        phone,
+        'மன்னிக்கவும், உங்கள் குரல் பதிவை செயலாக்குவதில் சிரமம் ஏற்பட்டது. கீழே உள்ள Option-ஐ தேர்வு பண்ணுங்க.',
+        [
+          { id: 'MENU_MAIN', title: 'Main Menu' },
+          { id: 'MENU_TICKET', title: 'Raise Ticket' },
+        ]
+      );
+      return;
+    }
+
+    // 3. Log transcribed user voice message in Live Chat
+    const userVoiceText = `🎤 [Voice Note]: "${result.transcript || 'குரல் பதிவு'}"`;
+    await dataStore.addChatMessage({
+      phone,
+      sender: 'user',
+      text: userVoiceText,
+      name: profileName,
+    });
+
+    // 4. Sanitize buttons (Meta enforces max 3 buttons, max 20 chars per title)
+    let buttons = (result.buttons || []).slice(0, 3).map((b) => ({
+      id: b.id || 'MENU_MAIN',
+      title: (b.title || 'Option').slice(0, 20),
+    }));
+
+    if (buttons.length === 0) {
+      buttons = [
+        { id: 'MENU_MAIN', title: 'Main Menu' },
+        { id: 'MENU_TICKET', title: 'Raise Ticket' },
+      ];
+    }
+
+    // 5. Send Tamil reply with buttons back to WhatsApp user
+    await whatsapp.sendReplyButtons(phone, result.reply_tamil, buttons);
+
+    // 6. Log bot reply to Live Chat
+    await dataStore.addChatMessage({
+      phone,
+      sender: 'bot',
+      text: result.reply_tamil,
+      name: 'Sangam Bot',
+    });
+
+    // 7. If the user's intent was to raise a ticket or complaint, automatically create ticket in Supabase
+    if (result.intent === 'RAISE_TICKET') {
+      try {
+        const newTicket = await dataStore.createTicket({
+          phone,
+          category: 'Voice Grievance',
+          description: result.transcript || result.summary || 'Voice support request',
+        });
+        console.log(`🎫 [Chatbot] Auto-created support ticket #${newTicket.ticketCode} from voice note`);
+      } catch (err) {
+        console.error('Error auto-creating ticket from voice:', err.message);
+      }
+    }
   }
 }
 
