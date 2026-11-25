@@ -1,9 +1,9 @@
-require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
-const whatsapp = require('./src/services/whatsapp.service');
-const chatbot = require('./src/services/chatbot.service');
-const dataStore = require('./src/stores/dataStore');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const fs = require('fs');
+const whatsapp = require('../src/services/whatsapp.service');
+const chatbot = require('../src/services/chatbot.service');
+const dataStore = require('../src/stores/dataStore');
 
 async function testFullVoicePipeline() {
   console.log('🧪 Testing End-to-End Voice Note Pipeline...');
@@ -12,7 +12,7 @@ async function testFullVoicePipeline() {
   const originalDownload = whatsapp.downloadMediaBuffer;
   const originalSendReplyButtons = whatsapp.sendReplyButtons;
 
-  const audioPath = path.join(__dirname, 'sarvam_sample_vijay.wav');
+  const audioPath = path.join(__dirname, '../sarvam_samples', 'sarvam_sample_vijay.wav');
   const audioBuffer = fs.readFileSync(audioPath);
 
   whatsapp.downloadMediaBuffer = async (mediaId) => {

@@ -1,6 +1,6 @@
-require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const fs = require('fs');
 const { SarvamAIClient } = require('sarvamai');
 
 async function main() {
@@ -29,7 +29,7 @@ async function main() {
     if (response.audios && response.audios[0]) {
       // 2. Save the audio file to disk so you can listen to it!
       const audioBuffer = Buffer.from(response.audios[0], 'base64');
-      const outputPath = path.join(__dirname, 'sarvam_test_output.wav');
+      const outputPath = path.join(__dirname, '../sarvam_samples', 'sarvam_test_output.wav');
       fs.writeFileSync(outputPath, audioBuffer);
 
       console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

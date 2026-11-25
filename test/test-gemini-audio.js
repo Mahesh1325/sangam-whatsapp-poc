@@ -1,6 +1,6 @@
-require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const fs = require('fs');
 const { GoogleGenAI } = require('@google/genai');
 
 const apiKey = process.env.GEMINI_API_KEY;
@@ -13,7 +13,7 @@ if (!apiKey) {
 const ai = new GoogleGenAI({ apiKey });
 
 async function testAudioProcessing() {
-  const audioFilePath = path.join(__dirname, 'sarvam_sample_vijay.wav');
+  const audioFilePath = path.join(__dirname, '../sarvam_samples', 'sarvam_sample_vijay.wav');
   
   if (!fs.existsSync(audioFilePath)) {
     console.error(`❌ Audio sample not found at: ${audioFilePath}`);
