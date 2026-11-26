@@ -2,13 +2,59 @@ import os
 import time
 import tempfile
 import psutil
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from faster_whisper import WhisperModel
 
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "models", "whisper-ta-small")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+VASISTA_DIR = os.path.join(MODELS_DIR, "whisper-ta-small")
+TINY_DIR = os.path.join(MODELS_DIR, "whisper-tiny")
 
-app = FastAPI(title="Sangam Voice Benchmark Engine", version="1.0.0")
+# Loaded model cache: model_id -> WhisperModel instance
+loaded_models = {}
+
+def get_or_load_model(model_id: str):
+    # Normalize model_id
+    clean_id = model_id.strip()
+    if clean_id in loaded_models:
+        return loaded_models[clean_id]
+
+    print(f"⏳ [Engine] Loading model '{clean_id}' into memory...")
+    t0 = time.time()
+
+    if "tiny" in clean_id.lower():
+        target_path = TINY_DIR if os.path.exists(TINY_DIR) else "tiny"
+        m = WhisperModel(target_path, device="cpu", compute_type="int8", cpu_threads=4)
+        clean_id = "openai/whisper-tiny"
+    else:
+        m = WhisperModel(VASISTA_DIR, device="cpu", compute_type="int8", cpu_threads=4)
+        clean_id = "vasista22/whisper-tamil-small"
+
+    load_time = time.time() - t0
+    loaded_models[clean_id] = m
+    # Also alias short names
+    if "tiny" in clean_id:
+        loaded_models["tiny"] = m
+        loaded_models["whisper-tiny"] = m
+    else:
+        loaded_models["vasista"] = m
+        loaded_models["whisper-ta-small"] = m
+
+    print(f"✅ [Engine] Loaded '{clean_id}' in {load_time:.2f}s!")
+    return m
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Pre-load vasista22 Tamil small on startup
+    try:
+        get_or_load_model("vasista22/whisper-tamil-small")
+    except Exception as e:
+        print(f"⚠️ [Engine] Startup pre-load error: {e}")
+    yield
+
+app = FastAPI(title="Sangam Multi-Model Voice Engine", version="2.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,51 +64,73 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model = None
-model_load_time = 0
-
-@app.on_event("startup")
-def load_whisper():
-    global model, model_load_time
-    if os.path.exists(MODEL_DIR):
-        print(f"⏳ [Engine] Pre-loading faster-whisper model from {MODEL_DIR}...")
-        t0 = time.time()
-        model = WhisperModel(MODEL_DIR, device="cpu", compute_type="int8", cpu_threads=4)
-        model_load_time = time.time() - t0
-        print(f"✅ [Engine] Whisper model loaded into memory in {model_load_time:.2f}s!")
-    else:
-        print(f"⚠️ [Engine] Model directory not found yet: {MODEL_DIR}")
-
 @app.get("/health")
 def health():
     process = psutil.Process(os.getpid())
+    unique_loaded = list(set([k for k in loaded_models.keys() if "/" in k]))
     return {
-        "status": "ready" if model is not None else "model_missing",
-        "model_id": "vasista22/whisper-tamil-small",
-        "quantization": "int8",
-        "device": "cpu",
+        "status": "ready" if len(loaded_models) > 0 else "standby",
+        "loaded_models": unique_loaded,
         "memory_mb": round(process.memory_info().rss / (1024 * 1024), 2),
         "cpu_threads": 4,
-        "load_time_seconds": round(model_load_time, 2),
     }
+
+@app.get("/models")
+def list_models():
+    return [
+        {
+            "id": "vasista22/whisper-tamil-small",
+            "name": "vasista22/whisper-tamil-small",
+            "displayName": "Tamil Whisper Small (Fine-Tuned)",
+            "provider": "Self-Hosted CPU",
+            "type": "whisper",
+            "quantization": "INT8 (CTranslate2)",
+            "size": "~248 MB",
+            "memory": "~430 MB RAM",
+            "is_loaded": "vasista22/whisper-tamil-small" in loaded_models,
+            "description": "Specially fine-tuned for high accuracy on native Tamil speech and common community vocabulary.",
+        },
+        {
+            "id": "openai/whisper-tiny",
+            "name": "openai/whisper-tiny",
+            "displayName": "Whisper Tiny (Ultra-Fast Baseline)",
+            "provider": "Self-Hosted CPU",
+            "type": "whisper",
+            "quantization": "INT8 (CTranslate2)",
+            "size": "~75 MB",
+            "memory": "~150 MB RAM",
+            "is_loaded": "openai/whisper-tiny" in loaded_models,
+            "description": "Ultra-lightweight multilingual baseline model for sub-second low-resource devices.",
+        },
+        {
+            "id": "gemini-3.1-flash-lite",
+            "name": "Google Gemini 3.1 Flash Lite",
+            "displayName": "Gemini 3.1 Flash Lite (Cloud)",
+            "provider": "Google Cloud",
+            "type": "cloud",
+            "quantization": "N/A (Cloud Multimodal API)",
+            "size": "Cloud Hosted",
+            "memory": "0 MB Local",
+            "is_loaded": True,
+            "description": "High-speed multimodal LLM with direct Tamil comprehension, sentiment & WhatsApp intent detection.",
+        },
+    ]
 
 @app.post("/transcribe")
 async def transcribe_audio(
     file: UploadFile = File(...),
-    language: str = Query("ta", description="Language code e.g. ta for Tamil"),
+    model_id: str = Query("vasista22/whisper-tamil-small", description="Model ID to use"),
+    language: str = Query("ta", description="Language code"),
     beam_size: int = Query(2, description="Beam search width"),
 ):
-    global model
-    if model is None:
-        if os.path.exists(MODEL_DIR):
-            load_whisper()
-        else:
-            return {"error": "Model not found on disk. Please complete model download first."}
+    try:
+        model = get_or_load_model(model_id)
+    except Exception as e:
+        return {"error": f"Failed to load model {model_id}: {str(e)}"}
 
     process = psutil.Process(os.getpid())
-    process.cpu_percent(interval=None) # Reset CPU measurement counter
-    
-    # Write uploaded audio to a temporary file
+    process.cpu_percent(interval=None)
+
     suffix = os.path.splitext(file.filename)[1] or ".wav"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         content = await file.read()
@@ -87,6 +155,9 @@ async def transcribe_audio(
         duration = round(getattr(info, "duration", 0), 2)
         rtf = round((t_end - t_start) / duration, 3) if duration > 0 else 0
 
+        # Resolve clean model display name
+        resolved_model_id = "openai/whisper-tiny" if "tiny" in model_id.lower() else "vasista22/whisper-tamil-small"
+
         return {
             "transcript": " ".join(texts),
             "language": info.language,
@@ -96,11 +167,14 @@ async def transcribe_audio(
             "rtf": rtf,
             "cpu_percent": round(cpu_usage, 1),
             "memory_mb": memory_mb,
-            "model": "vasista22/whisper-tamil-small-int8 (Self-Hosted)",
+            "model_id": resolved_model_id,
         }
     finally:
         if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     import uvicorn

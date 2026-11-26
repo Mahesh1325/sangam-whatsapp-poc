@@ -63,13 +63,21 @@ Return strict JSON only matching this schema:
 }
 `;
 
+// Candidate models in preference order (flash-lite models are lightning fast and avoid 503 capacity errors)
+const MODEL_CANDIDATES = [
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+];
+
 /**
- * Process audio buffer using Gemini 3.5 Flash Multimodal
+ * Process audio buffer using Gemini Multimodal
  * @param {Buffer} audioBuffer - Binary audio buffer (WAV, OGG, etc.)
  * @param {string} mimeType - e.g. "audio/ogg; codecs=opus" or "audio/wav"
+ * @param {string} preferredModel - Optional specific model ID
  * @returns {Promise<Object|null>} - Parsed JSON result or null on failure
  */
-async function processVoiceNote(audioBuffer, mimeType = 'audio/ogg') {
+async function processVoiceNote(audioBuffer, mimeType = 'audio/ogg', preferredModel = null) {
   const ai = getAIClient();
   if (!ai) {
     console.error('❌ [GeminiService] AI client unavailable (missing GEMINI_API_KEY)');
@@ -80,13 +88,16 @@ async function processVoiceNote(audioBuffer, mimeType = 'audio/ogg') {
   const cleanMimeType = mimeType.split(';')[0].trim() || 'audio/ogg';
   const base64Audio = audioBuffer.toString('base64');
 
-  const maxAttempts = 2;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  const modelsToTry = preferredModel && preferredModel.startsWith('gemini')
+    ? [preferredModel, ...MODEL_CANDIDATES.filter((m) => m !== preferredModel)]
+    : MODEL_CANDIDATES;
+
+  for (const modelName of modelsToTry) {
     try {
-      console.log(`🤖 [GeminiService] Processing voice note with model gemini-3.5-flash (${cleanMimeType}, ${audioBuffer.length} bytes, attempt ${attempt}/${maxAttempts})...`);
-      
+      console.log(`🤖 [GeminiService] Trying voice analysis with model '${modelName}' (${cleanMimeType}, ${audioBuffer.length} bytes)...`);
+
       const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: modelName,
         contents: [
           {
             role: 'user',
@@ -110,25 +121,27 @@ async function processVoiceNote(audioBuffer, mimeType = 'audio/ogg') {
       });
 
       const parsed = JSON.parse(response.text);
-      console.log('✅ [GeminiService] Voice note analysis complete:', {
+      console.log(`✅ [GeminiService] Voice analysis succeeded with '${modelName}':`, {
         intent: parsed.intent,
         lang: parsed.language_detected,
         transcript: parsed.transcript?.slice(0, 60),
       });
-      return parsed;
+
+      return {
+        ...parsed,
+        model_used: modelName,
+      };
     } catch (err) {
-      console.error(`❌ [GeminiService] Attempt ${attempt} error:`, err.message || err);
-      if (attempt < maxAttempts) {
-        await new Promise((r) => setTimeout(r, 1500));
-      } else {
-        return null;
-      }
+      console.warn(`⚠️ [GeminiService] Model '${modelName}' failed: ${err.message || err}. Trying next fallback...`);
     }
   }
+
+  console.error('❌ [GeminiService] All Gemini models failed to process audio.');
   return null;
 }
 
 module.exports = {
   processVoiceNote,
   SYSTEM_INSTRUCTION,
+  MODEL_CANDIDATES,
 };
