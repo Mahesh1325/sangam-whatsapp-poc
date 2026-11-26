@@ -1058,35 +1058,29 @@ export default function VoiceLab() {
 
                 {/* CPU Utilization & Occupancy Breakdown */}
                 <div style={{ background: 'var(--surface-elevated)', padding: '14px 16px', borderRadius: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>CPU Thread Occupancy</span>
-                    <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '600' }}>
-                      {singleResult.type === 'cloud' ? '0% Local' : `${singleResult.cpuThreads || 4} Threads Active`}
-                    </span>
-                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>CPU Utilization</div>
                   <div style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', marginTop: '2px' }}>
-                    {singleResult.type === 'cloud' ? '0% (Google Cloud)' : `${singleResult.cpuPercent}%`}
+                    {singleResult.type === 'cloud' 
+                      ? '0.0%' 
+                      : `~${Math.round((singleResult.cpuPercent || 250) / (singleResult.logicalCores || 8))}%`}
                   </div>
-                  {/* Detailed breakdown */}
+                  {/* Visual CPU Gauge */}
                   {singleResult.type !== 'cloud' ? (
                     <div>
                       <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
                         <div style={{
-                          width: `${Math.min((singleResult.cpuPercent || 250) / 4, 100)}%`,
+                          width: `${Math.min(Math.round((singleResult.cpuPercent || 250) / (singleResult.logicalCores || 8)), 100)}%`,
                           height: '100%',
                           background: '#10b981',
                         }} />
                       </div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-primary)', marginTop: '6px', fontWeight: '600' }}>
-                        Host Impact: ~{Math.round((singleResult.cpuPercent || 250) / (singleResult.logicalCores || 8))}% of total {singleResult.logicalCores || 8}-core system
-                      </div>
-                      <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                        Engages {singleResult.cpuThreads || 4} worker threads (leaves {Math.max(100 - Math.round((singleResult.cpuPercent || 250) / (singleResult.logicalCores || 8)), 0)}% CPU free for server)
+                      <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                        {singleResult.cpuThreads || 4} Threads Active • {singleResult.logicalCores || 8} Cores Available
                       </div>
                     </div>
                   ) : (
-                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '6px' }}>
-                      Zero server CPU load • Processed on Google Cloud
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                      0% Host Load • Processed on Cloud
                     </div>
                   )}
                 </div>
