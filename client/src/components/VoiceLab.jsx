@@ -972,7 +972,7 @@ export default function VoiceLab() {
                     TRANSCRIPTION OUTPUT:
                   </span>
                   <span style={{ fontSize: '12px', fontWeight: '700', color: '#10b981' }}>
-                    Dynamic Accuracy: {typeof singleResult.accuracyPercent === 'number' ? `${singleResult.accuracyPercent.toFixed(1)}%` : (typeof singleResult.accuracy_percent === 'number' ? `${singleResult.accuracy_percent.toFixed(1)}%` : '96.3%')}
+                    Dynamic Accuracy: {singleResult.accuracyPercent != null ? `${singleResult.accuracyPercent}%` : (singleResult.accuracy_percent != null ? `${singleResult.accuracy_percent}%` : 'N/A')}
                   </span>
                 </div>
                 <div style={{ 
@@ -1047,14 +1047,14 @@ export default function VoiceLab() {
                 <div style={{ background: 'var(--surface-elevated)', padding: '14px 16px', borderRadius: '10px' }}>
                   <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Measured Speech Accuracy</div>
                   <div style={{ fontSize: '20px', fontWeight: '700', color: '#10b981', marginTop: '2px' }}>
-                    {typeof singleResult.accuracyPercent === 'number'
-                      ? `${singleResult.accuracyPercent.toFixed(1)}%`
-                      : (typeof singleResult.accuracy_percent === 'number'
-                          ? `${singleResult.accuracy_percent.toFixed(1)}%`
-                          : '96.3%')}
+                    {singleResult.accuracyPercent != null
+                      ? `${singleResult.accuracyPercent}%`
+                      : (singleResult.accuracy_percent != null
+                          ? `${singleResult.accuracy_percent}%`
+                          : 'N/A')}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                    Calculated live per token logits
+                    Computed dynamically on this audio
                   </div>
                 </div>
 
