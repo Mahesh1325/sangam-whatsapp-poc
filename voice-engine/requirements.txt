@@ -1,0 +1,8 @@
+faster-whisper>=1.2.0
+torch
+transformers
+ctranslate2>=4.9.0
+psutil
+fastapi
+uvicorn
+python-multipart

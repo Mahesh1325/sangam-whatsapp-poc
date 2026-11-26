@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Ticket, UserCheck, MessageSquare } from 'lucide-react';
+import { Ticket, UserCheck, MessageSquare, Mic } from 'lucide-react';
 import Navbar from './components/Navbar';
 import KpiCards from './components/KpiCards';
 import TicketList from './components/TicketList';
 import MemberUpdatesList from './components/MemberUpdatesList';
 import LiveChat from './components/LiveChat';
+import VoiceLab from './components/VoiceLab';
 import { api } from './services/api';
 
 export default function App() {
@@ -202,6 +203,24 @@ export default function App() {
             }}>
             <MessageSquare size={16} /> Live WhatsApp Chat ({conversations.length})
           </button>
+          <button
+            onClick={() => setActiveTab('voicelab')}
+            style={{
+              background: activeTab === 'voicelab' ? 'var(--accent)' : 'var(--tab-inactive-bg)',
+              color: activeTab === 'voicelab' ? '#ffffff' : 'var(--tab-inactive-text)',
+              border: activeTab === 'voicelab' ? '1px solid var(--accent)' : '1px solid var(--border)',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              fontWeight: '700',
+              boxShadow: activeTab === 'voicelab' ? '0 4px 12px rgba(37, 99, 235, 0.3)' : '0 1px 3px rgba(0,0,0,0.05)'
+            }}>
+            <Mic size={16} /> 🔬 Voice Lab & Benchmarks
+          </button>
         </div>
 
         {activeTab === 'tickets' && (
@@ -232,6 +251,10 @@ export default function App() {
             onSendReply={handleSendReply}
             isSending={isSending}
           />
+        )}
+
+        {activeTab === 'voicelab' && (
+          <VoiceLab />
         )}
       </main>
     </div>

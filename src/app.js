@@ -6,6 +6,7 @@ const flowRoutes = require('./routes/flow.routes');
 const adminRoutes = require('./routes/admin.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const authRoutes = require('./routes/auth.routes');
+const benchmarkRoutes = require('./routes/benchmark.routes');
 const flowController = require('./controllers/flow.controller');
 const authMiddleware = require('./middlewares/auth.middleware');
 
@@ -32,6 +33,7 @@ app.use('/webhook', webhookRoutes);
 // 4. Admin APIs & Live Dashboard (Protected by Secure JWT & Session Cookie)
 app.use('/admin', authMiddleware, adminRoutes);
 app.use('/dashboard', authMiddleware, dashboardRoutes);
+app.use('/api/benchmark', authMiddleware, benchmarkRoutes);
 
 // Root route redirect to dashboard (will redirect to /login if unauthenticated)
 app.get('/', (req, res) => {

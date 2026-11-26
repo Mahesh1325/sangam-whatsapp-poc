@@ -80,44 +80,52 @@ async function processVoiceNote(audioBuffer, mimeType = 'audio/ogg') {
   const cleanMimeType = mimeType.split(';')[0].trim() || 'audio/ogg';
   const base64Audio = audioBuffer.toString('base64');
 
-  try {
-    console.log(`🤖 [GeminiService] Processing voice note with model gemini-3.5-flash (${cleanMimeType}, ${audioBuffer.length} bytes)...`);
-    
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              inlineData: {
-                data: base64Audio,
-                mimeType: cleanMimeType,
+  const maxAttempts = 2;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(`🤖 [GeminiService] Processing voice note with model gemini-3.5-flash (${cleanMimeType}, ${audioBuffer.length} bytes, attempt ${attempt}/${maxAttempts})...`);
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  data: base64Audio,
+                  mimeType: cleanMimeType,
+                },
               },
-            },
-            {
-              text: 'Listen to this voice message from a Sangam community member, transcribe it, and provide the structured response according to your system instructions.',
-            },
-          ],
+              {
+                text: 'Listen to this voice message from a Sangam community member, transcribe it, and provide the structured response according to your system instructions.',
+              },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json',
         },
-      ],
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: 'application/json',
-      },
-    });
+      });
 
-    const parsed = JSON.parse(response.text);
-    console.log('✅ [GeminiService] Voice note analysis complete:', {
-      intent: parsed.intent,
-      lang: parsed.language_detected,
-      transcript: parsed.transcript?.slice(0, 60),
-    });
-    return parsed;
-  } catch (err) {
-    console.error('❌ [GeminiService] Error generating content:', err.message || err);
-    return null;
+      const parsed = JSON.parse(response.text);
+      console.log('✅ [GeminiService] Voice note analysis complete:', {
+        intent: parsed.intent,
+        lang: parsed.language_detected,
+        transcript: parsed.transcript?.slice(0, 60),
+      });
+      return parsed;
+    } catch (err) {
+      console.error(`❌ [GeminiService] Attempt ${attempt} error:`, err.message || err);
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 1500));
+      } else {
+        return null;
+      }
+    }
   }
+  return null;
 }
 
 module.exports = {
