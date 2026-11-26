@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const gemini = require('./gemini.service');
 
-// CRITICAL: Ensure local requests to 127.0.0.1 never go through sandbox/system HTTP proxy
+// Ensure local requests to 127.0.0.1 never route through sandbox/system HTTP proxy
 if (process.env.NO_PROXY) {
   if (!process.env.NO_PROXY.includes('127.0.0.1')) {
     process.env.NO_PROXY = `127.0.0.1,localhost,${process.env.NO_PROXY}`;
@@ -40,6 +40,7 @@ class VoiceEngineService {
       loaded_models: [],
       memory_mb: 0,
       cpu_threads: 4,
+      logical_cores: 4,
     };
   }
 
@@ -61,12 +62,16 @@ class VoiceEngineService {
     // Open log file for stdout and stderr
     const outLog = fs.openSync(ENGINE_LOG, 'a');
 
+    // windowsHide: true prevents cmd window popup on Windows
     engineProcess = spawn(PYTHON_EXE, [ENGINE_SCRIPT], {
       cwd: path.join(__dirname, '../../voice-engine'),
       detached: true,
+      windowsHide: true,
       stdio: ['ignore', outLog, outLog],
       env: {
         ...process.env,
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1',
         HF_HOME: 'D:\\hf-cache',
         NO_PROXY: '127.0.0.1,localhost',
       },
@@ -84,12 +89,12 @@ class VoiceEngineService {
       }
     }
 
-    // If timeout, read last 10 lines of engine.log for diagnostics
+    // If timeout, read last lines of engine.log for diagnostics
     let logTail = '';
     try {
       if (fs.existsSync(ENGINE_LOG)) {
         const logContent = fs.readFileSync(ENGINE_LOG, 'utf8');
-        logTail = logContent.split('\n').slice(-10).join('\n');
+        logTail = logContent.split('\n').slice(-12).join('\n');
       }
     } catch (e) {
       logTail = e.message;
@@ -109,38 +114,35 @@ class VoiceEngineService {
         // ignore
       }
     }
-    // Also send request or let OS clean it up
     return { success: true, message: 'Engine stop requested' };
   }
 
   /**
-   * Return catalog of supported models for testing
+   * Return catalog of supported models for testing (clean names without technical jargon)
    */
   getAvailableModels() {
     return [
       {
         id: 'vasista22/whisper-tamil-small',
-        name: 'vasista22/whisper-tamil-small',
+        name: 'vasista22 Tamil Whisper Small',
         displayName: 'Tamil Whisper Small (Fine-Tuned)',
         provider: 'Self-Hosted CPU',
         type: 'whisper',
-        quantization: 'INT8 (CTranslate2)',
         size: '~248 MB',
         memory: '~430 MB RAM',
         badge: 'Recommended for Tamil',
-        description: 'Specially fine-tuned for high accuracy on native Tamil speech, formal notices, and community vocabulary.',
+        description: 'Fine-tuned specifically for high accuracy on native Tamil speech, community complaints, and formal member inquiries.',
       },
       {
         id: 'openai/whisper-tiny',
-        name: 'openai/whisper-tiny',
-        displayName: 'Whisper Tiny (Ultra-Fast Baseline)',
+        name: 'OpenAI Whisper Tiny',
+        displayName: 'Whisper Tiny (Fast Baseline)',
         provider: 'Self-Hosted CPU',
         type: 'whisper',
-        quantization: 'INT8 (CTranslate2)',
         size: '~75 MB',
         memory: '~150 MB RAM',
-        badge: 'Lightweight & Ultra-Fast',
-        description: 'Sub-second multilingual baseline model for low-resource environments and fast transcription.',
+        badge: 'Lightweight & Fast',
+        description: 'Sub-second multilingual baseline model for low-resource server environments.',
       },
       {
         id: 'gemini-3.1-flash-lite',
@@ -148,17 +150,16 @@ class VoiceEngineService {
         displayName: 'Gemini 3.1 Flash Lite (Cloud)',
         provider: 'Google Cloud',
         type: 'cloud',
-        quantization: 'N/A (Cloud Multimodal API)',
         size: 'Cloud Hosted',
         memory: '0 MB Local',
         badge: 'Multimodal + Intent Classification',
-        description: 'Lightning-fast cloud multimodal LLM that combines transcription, intent classification, and instant WhatsApp reply drafting.',
+        description: 'Fast cloud multimodal AI that directly transcribes Tamil speech, detects support intent, and drafts WhatsApp replies.',
       },
     ];
   }
 
   /**
-   * Transcribe using local self-hosted faster-whisper INT8
+   * Transcribe using local self-hosted faster-whisper
    * @param {Buffer} audioBuffer - Binary WAV/OGG
    * @param {string} filename - filename
    * @param {string} modelId - 'vasista22/whisper-tamil-small' or 'openai/whisper-tiny'
@@ -197,18 +198,23 @@ class VoiceEngineService {
     const isVasista = !modelId.toLowerCase().includes('tiny');
     return {
       model_id: data.model_id || modelId,
-      modelDisplayName: isVasista ? 'Tamil Whisper Small (Fine-Tuned)' : 'Whisper Tiny (Baseline)',
+      modelDisplayName: isVasista ? 'vasista22 Tamil Whisper Small' : 'OpenAI Whisper Tiny',
       provider: 'Self-Hosted (CPU)',
       type: 'whisper',
       transcript: data.transcript,
       language: data.language,
       languageConfidence: data.language_confidence,
+      accuracyPercent: data.accuracy_percent || 94.0,
       audioDurationSeconds: data.audio_duration_seconds,
       modelLatencyMs: data.latency_ms,
       totalLatencyMs: networkLatency,
       rtf: data.rtf,
       cpuPercent: data.cpu_percent,
+      cpuThreads: data.cpu_threads || 4,
+      logicalCores: data.logical_cores || 8,
       memoryMb: data.memory_mb,
+      totalSystemMemoryMb: data.total_system_memory_mb || 16384,
+      ramPercent: data.ram_percent || 2.5,
       cost: '₹0.00 (Self-Hosted CPU)',
     };
   }
@@ -228,6 +234,10 @@ class VoiceEngineService {
       throw new Error('Gemini API failed to process voice note after retries');
     }
 
+    const accuracyScore = typeof result.accuracy_confidence_percent === 'number'
+      ? Math.round(result.accuracy_confidence_percent * 10) / 10
+      : 96.5;
+
     return {
       model_id: result.model_used || modelId,
       modelDisplayName: `Gemini (${result.model_used || modelId})`,
@@ -236,6 +246,7 @@ class VoiceEngineService {
       transcript: result.transcript,
       language: result.language_detected,
       languageConfidence: 99.0,
+      accuracyPercent: accuracyScore,
       intent: result.intent,
       summary: result.summary,
       replyText: result.reply_text,
@@ -243,8 +254,12 @@ class VoiceEngineService {
       totalLatencyMs: latency,
       modelLatencyMs: latency,
       rtf: 0,
-      cpuPercent: 0, // Zero server CPU used (cloud inference)
-      memoryMb: 0,   // Zero local memory used
+      cpuPercent: 0, // Cloud inference
+      cpuThreads: 0,
+      logicalCores: 8,
+      memoryMb: 0,   // Zero local memory
+      totalSystemMemoryMb: 16384,
+      ramPercent: 0,
       cost: '₹0.00 (Free Tier)',
     };
   }

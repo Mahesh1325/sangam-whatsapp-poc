@@ -54,6 +54,7 @@ Return strict JSON only matching this schema:
 {
   "transcript": "...",
   "language_detected": "...",
+  "accuracy_confidence_percent": 95.5,
   "intent": "INFO_MEMBERSHIP | INFO_EVENTS | INFO_OFFICE | UPDATE_DETAILS | RAISE_TICKET | CHECK_TICKETS | GENERAL_GREETING | IRRELEVANT",
   "summary": "1 sentence brief in English",
   "reply_text": "...",
