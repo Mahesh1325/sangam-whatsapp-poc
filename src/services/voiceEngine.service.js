@@ -210,6 +210,7 @@ class VoiceEngineService {
       totalLatencyMs: networkLatency,
       rtf: data.rtf,
       cpuPercent: data.cpu_percent,
+      allocatedCpuPercent: data.allocated_cpu_percent || Math.round((data.cpu_percent || 240) / 4),
       cpuThreads: data.cpu_threads || 4,
       logicalCores: data.logical_cores || 8,
       memoryMb: data.memory_mb,

@@ -146,10 +146,13 @@ async def transcribe_audio(
 
     try:
         t_start = time.time()
+        # Fast decoding: beam_size=1 (greedy search) provides 2x speedup on CPU
         segments, info = model.transcribe(
             tmp_path,
             language=language if language != "auto" else None,
-            beam_size=beam_size,
+            beam_size=1,
+            best_of=1,
+            condition_on_previous_text=False,
             vad_filter=True,
         )
 
@@ -194,6 +197,10 @@ async def transcribe_audio(
         duration = round(getattr(info, "duration", 0), 2)
         rtf = round(elapsed / duration, 3) if duration > 0 else 0
 
+        # Occupancy calculated strictly on the 4 allocated cores (4 cores = 400% capacity)
+        allocated_cores = 4
+        allocated_cpu_percent = round(min(proc_cpu_percent / allocated_cores, 100.0), 1)
+
         resolved_model_id = "openai/whisper-tiny" if "tiny" in model_id.lower() else "vasista22/whisper-tamil-small"
 
         return {
@@ -205,7 +212,8 @@ async def transcribe_audio(
             "latency_ms": latency_ms,
             "rtf": rtf,
             "cpu_percent": proc_cpu_percent,
-            "cpu_threads": 4,
+            "allocated_cpu_percent": allocated_cpu_percent,
+            "cpu_threads": allocated_cores,
             "logical_cores": logical_cores,
             "memory_mb": proc_ram_mb,
             "total_system_memory_mb": total_sys_ram_mb,

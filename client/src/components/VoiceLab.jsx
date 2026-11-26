@@ -1061,7 +1061,7 @@ export default function VoiceLab() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>CPU Thread Occupancy</span>
                     <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '600' }}>
-                      {singleResult.type === 'cloud' ? '0% Local' : `${singleResult.cpuThreads || 4} Cores Active`}
+                      {singleResult.type === 'cloud' ? '0% Local' : `${singleResult.cpuThreads || 4} Cores Allocated`}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '2px' }}>
@@ -1070,7 +1070,7 @@ export default function VoiceLab() {
                     </div>
                     {singleResult.type !== 'cloud' && (
                       <div style={{ fontSize: '12px', fontWeight: '600', color: '#3b82f6' }}>
-                        (~{Math.round((singleResult.cpuPercent || 225) / (singleResult.logicalCores || 8))}% Avg Server Load)
+                        (~{singleResult.allocatedCpuPercent || Math.round((singleResult.cpuPercent || 240) / (singleResult.cpuThreads || 4))}% of 4 Cores)
                       </div>
                     )}
                   </div>
@@ -1079,13 +1079,13 @@ export default function VoiceLab() {
                     <div>
                       <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
                         <div style={{
-                          width: `${Math.min(Math.round((singleResult.cpuPercent || 225) / (singleResult.logicalCores || 8)), 100)}%`,
+                          width: `${Math.min(singleResult.allocatedCpuPercent || Math.round((singleResult.cpuPercent || 240) / (singleResult.cpuThreads || 4)), 100)}%`,
                           height: '100%',
                           background: '#10b981',
                         }} />
                       </div>
                       <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                        {singleResult.cpuPercent}% by {singleResult.cpuThreads || 4} Cores Occupied • ~{Math.round((singleResult.cpuPercent || 225) / (singleResult.logicalCores || 8))}% Avg on {singleResult.logicalCores || 8}-Core Host
+                        {singleResult.cpuPercent}% across {singleResult.cpuThreads || 4} Allocated Cores ({singleResult.allocatedCpuPercent || Math.round((singleResult.cpuPercent || 240) / (singleResult.cpuThreads || 4))}% utilization)
                       </div>
                     </div>
                   ) : (
