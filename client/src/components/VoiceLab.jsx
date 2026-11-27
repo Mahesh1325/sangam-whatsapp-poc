@@ -745,7 +745,43 @@ export default function VoiceLab() {
                 </div>
               </div>
 
-              {/* Option 3: Google Gemini */}
+              {/* Option 3: AI4Bharat IndicWav2Vec Tamil */}
+              <div 
+                onClick={() => setSelectedModel('ai4bharat/indicwav2vec-tamil')}
+                style={{
+                  background: selectedModel === 'ai4bharat/indicwav2vec-tamil' ? 'rgba(139, 92, 246, 0.08)' : 'var(--surface-elevated)',
+                  border: selectedModel === 'ai4bharat/indicwav2vec-tamil' ? '2px solid #8b5cf6' : '1px solid var(--border)',
+                  borderRadius: '10px',
+                  padding: '16px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    background: 'rgba(139, 92, 246, 0.2)',
+                    color: '#8b5cf6',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                  }}>
+                    Self-Hosted CPU
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#8b5cf6', fontWeight: '700' }}>
+                    ⚡ Instant CTC Decoding
+                  </span>
+                </div>
+                <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-primary)' }}>
+                  AI4Bharat IndicWav2Vec Tamil
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Non-autoregressive Wav2Vec2 CTC model. Single forward pass without hallucination loops (~180 MB RAM).
+                </div>
+              </div>
+
+              {/* Option 4: Google Gemini */}
               <div 
                 onClick={() => setSelectedModel('gemini-3.1-flash-lite')}
                 style={{
@@ -1153,7 +1189,7 @@ export default function VoiceLab() {
                 2. Run Side-by-Side Comparison Benchmark
               </h3>
               <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                Feeds the exact same audio clip simultaneously to <strong>vasista22 Tamil Whisper Small</strong>, <strong>OpenAI Whisper Tiny</strong>, and <strong>Google Gemini Flash Lite</strong>.
+                Feeds the exact same audio clip simultaneously to <strong>vasista22 Tamil Whisper Small</strong>, <strong>AI4Bharat IndicWav2Vec Tamil</strong>, <strong>OpenAI Whisper Tiny</strong>, and <strong>Google Gemini Flash Lite</strong>.
               </p>
             </div>
 
@@ -1235,6 +1271,54 @@ export default function VoiceLab() {
                       <div style={{ background: 'var(--surface-elevated)', padding: '8px', borderRadius: '6px' }}>
                         <span style={{ color: 'var(--text-secondary)' }}>RAM Occupied:</span>
                         <div style={{ fontWeight: '700' }}>{comparisonResults.vasista?.memoryMb} MB</div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Column 2: AI4Bharat IndicWav2Vec Tamil CTC */}
+              <div style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                padding: '20px',
+                boxShadow: 'var(--card-shadow)',
+                position: 'relative',
+              }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: '#8b5cf6' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', background: 'rgba(139,92,246,0.15)', color: '#8b5cf6', padding: '3px 8px', borderRadius: '4px' }}>
+                    SELF-HOSTED CPU
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#8b5cf6', fontWeight: '700' }}>⚡ Instant CTC</span>
+                </div>
+                <h4 style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  AI4Bharat IndicWav2Vec Tamil
+                </h4>
+                {comparisonResults.indicwav2vec?.error ? (
+                  <div style={{ color: '#ef4444', fontSize: '12px' }}>Error: {comparisonResults.indicwav2vec.error}</div>
+                ) : (
+                  <>
+                    <div style={{ background: 'var(--surface-elevated)', borderRadius: '6px', padding: '12px', fontSize: '13px', lineHeight: '1.5', minHeight: '90px', marginBottom: '14px' }}>
+                      "{comparisonResults.indicwav2vec?.transcript}"
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px' }}>
+                      <div style={{ background: 'var(--surface-elevated)', padding: '8px', borderRadius: '6px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Dynamic Accuracy:</span>
+                        <div style={{ fontWeight: '700', color: '#8b5cf6' }}>{comparisonResults.indicwav2vec?.accuracyPercent}%</div>
+                      </div>
+                      <div style={{ background: 'var(--surface-elevated)', padding: '8px', borderRadius: '6px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Latency:</span>
+                        <div style={{ fontWeight: '700' }}>{comparisonResults.indicwav2vec?.modelLatencyMs} ms</div>
+                      </div>
+                      <div style={{ background: 'var(--surface-elevated)', padding: '8px', borderRadius: '6px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>CPU Threads:</span>
+                        <div style={{ fontWeight: '700' }}>4 Threads ({comparisonResults.indicwav2vec?.cpuPercent}%)</div>
+                      </div>
+                      <div style={{ background: 'var(--surface-elevated)', padding: '8px', borderRadius: '6px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>RAM Occupied:</span>
+                        <div style={{ fontWeight: '700' }}>{comparisonResults.indicwav2vec?.memoryMb} MB</div>
                       </div>
                     </div>
                   </>
@@ -1371,6 +1455,15 @@ export default function VoiceLab() {
                     <td style={{ padding: '12px' }}>~430 MB</td>
                     <td style={{ padding: '12px', color: '#10b981', fontWeight: '600' }}>Measured Dynamically per Conversation</td>
                     <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>Production self-hosted WhatsApp voice notes with privacy and high Tamil accuracy</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '12px', fontWeight: '600', color: '#8b5cf6' }}>
+                      AI4Bharat IndicWav2Vec Tamil
+                    </td>
+                    <td style={{ padding: '12px' }}>Self-Hosted Local CPU</td>
+                    <td style={{ padding: '12px' }}>~180 MB (INT8)</td>
+                    <td style={{ padding: '12px', color: '#8b5cf6', fontWeight: '600' }}>Measured Dynamically per Conversation</td>
+                    <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>Instant non-autoregressive CTC decoding, zero hallucination loops on Tamil speech</td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '12px', fontWeight: '600', color: '#f59e0b' }}>

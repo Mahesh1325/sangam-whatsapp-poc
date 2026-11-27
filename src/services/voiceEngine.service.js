@@ -134,6 +134,17 @@ class VoiceEngineService {
         description: 'Fine-tuned specifically for high accuracy on native Tamil speech, community complaints, and formal member inquiries.',
       },
       {
+        id: 'ai4bharat/indicwav2vec-tamil',
+        name: 'AI4Bharat IndicWav2Vec Tamil',
+        displayName: 'IndicWav2Vec Tamil (CTC)',
+        provider: 'Self-Hosted CPU',
+        type: 'wav2vec2',
+        size: '~360 MB',
+        memory: '~180 MB RAM (INT8)',
+        badge: 'Sub-Second CTC',
+        description: 'Non-autoregressive Wav2Vec2 CTC acoustic model fine-tuned on native Tamil speech. Single-pass decoding without hallucination.',
+      },
+      {
         id: 'openai/whisper-tiny',
         name: 'OpenAI Whisper Tiny',
         displayName: 'Whisper Tiny (Fast Baseline)',
@@ -178,7 +189,7 @@ class VoiceEngineService {
     const tStart = Date.now();
     const query = new URLSearchParams({
       language: 'ta',
-      beam_size: '2',
+      beam_size: '1',
       model_id: modelId,
     });
 
@@ -195,12 +206,21 @@ class VoiceEngineService {
     const data = await res.json();
     const networkLatency = Date.now() - tStart;
 
-    const isVasista = !modelId.toLowerCase().includes('tiny');
+    let modelDisplayName = 'vasista22 Tamil Whisper Small';
+    let modelType = 'whisper';
+    if (modelId.toLowerCase().includes('wav2vec') || modelId.toLowerCase().includes('indic')) {
+      modelDisplayName = 'AI4Bharat IndicWav2Vec Tamil';
+      modelType = 'wav2vec2';
+    } else if (modelId.toLowerCase().includes('tiny')) {
+      modelDisplayName = 'OpenAI Whisper Tiny';
+      modelType = 'whisper';
+    }
+
     return {
       model_id: data.model_id || modelId,
-      modelDisplayName: isVasista ? 'vasista22 Tamil Whisper Small' : 'OpenAI Whisper Tiny',
+      modelDisplayName,
       provider: 'Self-Hosted (CPU)',
-      type: 'whisper',
+      type: modelType,
       transcript: data.transcript,
       language: data.language,
       languageConfidence: data.language_confidence,
@@ -288,14 +308,21 @@ class VoiceEngineService {
       results.vasista = { error: err.message };
     }
 
-    // 2. Whisper Tiny Baseline
+    // 2. IndicWav2Vec Tamil CTC
+    try {
+      results.indicwav2vec = await this.transcribeWhisper(audioBuffer, filename, 'ai4bharat/indicwav2vec-tamil');
+    } catch (err) {
+      results.indicwav2vec = { error: err.message };
+    }
+
+    // 3. Whisper Tiny Baseline
     try {
       results.tiny = await this.transcribeWhisper(audioBuffer, filename, 'openai/whisper-tiny');
     } catch (err) {
       results.tiny = { error: err.message };
     }
 
-    // 3. Gemini Cloud
+    // 4. Gemini Cloud
     try {
       results.gemini = await this.transcribeGemini(audioBuffer, mimeType, 'gemini-3.1-flash-lite');
     } catch (err) {
